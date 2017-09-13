@@ -26,21 +26,31 @@
 /********************************
 Common constants for Device & Host
 *********************************/
-
+// Number length (bits) definitions
 #define GPU_UINT8_LENGTH          8
 #define GPU_UINT32_LENGTH         32
 #define GPU_UINT64_LENGTH         64
-#define GPU_UINT64_MAX_VALUE      ULONG_MAX
-#define GPU_UINT32_ZEROS          0x00000000u
-#define GPU_UINT32_ONES           0xFFFFFFFFu
-#define GPU_UINT32_MASK_ONE_LOW   0x00000001u
-#define GPU_UINT32_MASK_ONE_HIGH  0x80000000u
-#define GPU_UINT8_ONES            0xFF
-#define GPU_UINT64_ONES           0xFFFFFFFFFFFFFFFFu
-#define GPU_UINT64_ZEROS          0x0000000000000000u
+// Number size (bytes) definitions
 #define GPU_UINT8_SIZE            1
 #define GPU_UINT32_SIZE           4
 #define GPU_UINT64_SIZE           8
+// UINT8  Mask definitions
+#define GPU_UINT8_ONES            0xFFu
+#define GPU_UINT8_ZEROS           0x00u
+#define GPU_UINT8_MASK_ONE_LOW    0x01u
+#define GPU_UINT8_MASK_ONE_HIGH   0x80u
+// UINT32 Mask definitions
+#define GPU_UINT32_ONES           0xFFFFFFFFu
+#define GPU_UINT32_ZEROS          0x00000000u
+#define GPU_UINT32_MASK_ONE_LOW   0x00000001u
+#define GPU_UINT32_MASK_ONE_HIGH  0x80000000u
+// UINT64 Mask definitions
+#define GPU_UINT64_ONES           0xFFFFFFFFFFFFFFFFu
+#define GPU_UINT64_ZEROS          0x0000000000000000u
+#define GPU_UINT64_MASK_ONE_LOW   0x0000000000000001u
+#define GPU_UINT64_MASK_ONE_HIGH  0x8000000000000000u
+// Max values definitions
+#define GPU_UINT64_MAX_VALUE      ULONG_MAX
 
 #define GPU_INLINE                inline
 

@@ -172,7 +172,7 @@ gpu_error_t gpu_bpm_filter_process_buffer(gpu_buffer_t *mBuff)
   if((numAlignments > maxCandidates) || (numAlignments > maxAlignments)) 
     return(E_OVERFLOWING_BUFFER);
 
-  gpu_bpm_filter_kernel<<<blocksPerGrid, threadsPerBlock, 0, idStream>>>((gpu_bpm_filter_device_qry_entry_t *)qry->d_queries, ref->d_reference[idSupDev],
+  gpu_bpm_filter_kernel<<<blocksPerGrid, threadsPerBlock, 0, idStream>>>((gpu_bpm_filter_device_qry_entry_t *)qry->d_queries, ref->d_reference_plain[idSupDev],
                                                                           cand->d_candidates, rebuff->d_reorderBuffer, d_results,
                                                                           qry->d_qinfo, ref->size, numResults,
                                                                           rebuff->d_initPosPerBucket, rebuff->d_initWarpPerBucket,

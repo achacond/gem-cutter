@@ -131,6 +131,15 @@ GPU_INLINE __device__ uint64_t funnelshift_left_64(const uint64_t scalarValueA,
          | (scalarValueB >> shiftedBits));
 }
 
+GPU_INLINE __device__ uint64_t funnelshift_right_64(const uint64_t scalarValueA,
+                                                    const uint64_t scalarValueB,
+                                                    const uint32_t shiftedBits)
+{   /* Concat A with B and right-shifts nbits:  (A | B) >> nbits */
+  const uint32_t complementShiftedBits = GPU_UINT64_LENGTH - shiftedBits;
+  return ( (scalarValueA >> shiftedBits)
+         | (scalarValueB << complementShiftedBits));
+}
+
 GPU_INLINE __device__ uint32_t __emulated_funnelshift_right_32(const uint32_t scalarValueA,
                                                                const uint32_t scalarValueB,
                                                                const uint32_t shiftedBits)

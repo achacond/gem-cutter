@@ -43,9 +43,6 @@ typedef struct {
 
 typedef struct {
   uint32_t             		  numCandidates;
-  uint32_t             		  numCandidatesBases;
-  gpu_bpm_align_cand_entry_t *h_candidates;
-  gpu_bpm_align_cand_entry_t *d_candidates;
   gpu_bpm_align_cand_info_t  *h_candidatesInfo;
   gpu_bpm_align_cand_info_t  *d_candidatesInfo;
 } gpu_bpm_align_candidates_buffer_t;
@@ -84,7 +81,6 @@ General Object
 typedef struct {
   uint32_t                    		  maxPEQEntries;
   uint32_t                    		  maxQueryBases;
-  uint32_t                    		  maxCandidateBases;
   uint32_t                    		  maxCandidates;
   uint32_t                    		  maxQueries;
   uint32_t							  maxCandidateSize;
@@ -103,7 +99,7 @@ typedef struct {
 #include "gpu_buffer.h"
 
 /* Functions to initialize all the BPM resources */
-float       gpu_bpm_align_size_per_candidate(const uint32_t averageQuerySize, const uint32_t averageCandidateSize, const uint32_t candidatesPerQuery);
+float       gpu_bpm_align_size_per_candidate(const uint32_t averageQuerySize, const uint32_t candidatesPerQuery);
 uint32_t    gpu_bpm_align_candidates_for_binning_padding();
 void        gpu_bpm_align_reallocate_host_buffer_layout(gpu_buffer_t* const mBuff);
 void        gpu_bpm_align_reallocate_device_buffer_layout(gpu_buffer_t* const mBuff);

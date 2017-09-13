@@ -232,7 +232,7 @@ gpu_error_t gpu_kmer_filter_process_buffer(gpu_buffer_t *mBuff)
   if((qry->numBases > maxBases) || (qry->numQueries > maxQueries) || (res->numAlignments > maxCandidates) || (res->numAlignments > maxAlignments))
     return(E_OVERFLOWING_BUFFER);
 
-  gpu_kmer_filter_kernel<<<blocksPerGrid, threadsPerBlock, 0, idStream>>>(qry->d_queries, qry->d_queryInfo, ref->d_reference[idSupDev],
+  gpu_kmer_filter_kernel<<<blocksPerGrid, threadsPerBlock, 0, idStream>>>(qry->d_queries, qry->d_queryInfo, ref->d_reference_plain[idSupDev],
                                                                           cand->d_candidates, ref->size, res->d_alignments,
                                                                           maxError, res->numAlignments);
   return(SUCCESS);

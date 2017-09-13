@@ -13,16 +13,28 @@
 #include "gpu_commons.h"
 #include "gpu_devices.h"
 
-/* Defines related to Reference representation */
-#define GPU_REFERENCE_CHAR_LENGTH      2
-#define GPU_REFERENCE_CHARS_PER_UINT1  (GPU_UINT32_LENGTH / GPU_REFERENCE_CHAR_LENGTH)
-#define GPU_REFERENCE_CHARS_PER_UINT2  (GPU_REFERENCE_CHARS_PER_UINT1 * 2)
-#define GPU_REFERENCE_CHARS_PER_UINT4  (GPU_REFERENCE_CHARS_PER_UINT1 * 4)
-#define GPU_REFERENCE_CHARS_PER_ENTRY  GPU_REFERENCE_CHARS_PER_UINT2
-#define GPU_REFERENCE_BYTES_PER_ENTRY  GPU_UINT64_SIZE
+/* Defines of global reference representation */
+#define GPU_REFERENCE_PLAIN__CHAR_LENGTH       2
+#define GPU_REFERENCE_PLAIN__ENTRY_LENGTH      GPU_UINT64_LENGTH
+#define GPU_REFERENCE_PLAIN__ENTRY_SIZE        GPU_UINT64_SIZE
+#define GPU_REFERENCE_PLAIN__CHARS_PER_ENTRY  (GPU_REFERENCE_PLAIN__ENTRY_LENGTH / GPU_REFERENCE_PLAIN__CHAR_LENGTH)
+#define GPU_REFERENCE_PLAIN__MASK_BASE        (GPU_UINT64_ONES >> (GPU_REFERENCE_PLAIN__ENTRY_LENGTH - GPU_REFERENCE_PLAIN__CHAR_LENGTH))
+
+/* Defines of masked reference representation */
+#define GPU_REFERENCE_MASKED__CHAR_LENGTH      1
+#define GPU_REFERENCE_MASKED__ENTRY_LENGTH     GPU_UINT64_LENGTH
+#define GPU_REFERENCE_MASKED__ENTRY_SIZE       GPU_UINT64_SIZE
+#define GPU_REFERENCE_MASKED__CHARS_PER_ENTRY (GPU_REFERENCE_MASKED__ENTRY_LENGTH / GPU_REFERENCE_MASKED__CHAR_LENGTH)
+#define GPU_REFERENCE_MASKED__MASK_BASE       (GPU_UINT64_ONES >> (GPU_REFERENCE_MASKED__ENTRY_LENGTH - GPU_REFERENCE_MASKED__CHAR_LENGTH))
+
+/* Defines of global reference representation */
+#define GPU_REFERENCE_CHAR_LENGTH      GPU_REFERENCE_PLAIN__CHAR_LENGTH
+#define GPU_REFERENCE_ENTRY_LENGTH     GPU_REFERENCE_PLAIN__ENTRY_LENGTH
+#define GPU_REFERENCE_ENTRY_SIZE       GPU_REFERENCE_PLAIN__ENTRY_SIZE
+#define GPU_REFERENCE_CHARS_PER_ENTRY  GPU_REFERENCE_PLAIN__CHARS_PER_ENTRY
+#define GPU_REFERENCE_MASK_BASE        GPU_REFERENCE_PLAIN__MASK_BASE
 #define GPU_REFERENCE_UINT64_MASK_BASE (GPU_UINT64_ONES >> (GPU_UINT64_LENGTH - GPU_REFERENCE_CHAR_LENGTH))
 #define GPU_REFERENCE_UINT32_MASK_BASE (GPU_UINT32_ONES >> (GPU_UINT32_LENGTH - GPU_REFERENCE_CHAR_LENGTH))
-#define GPU_REFERENCE_MASK_BASE        GPU_REFERENCE_UINT64_MASK_BASE
 #define GPU_REFERENCE_END_PADDING      625
 
 /*****************************
@@ -30,10 +42,17 @@ Internal Objects (General)
 *****************************/
 
 typedef struct {
+  /* Data types for a Global Reference */
   uint64_t        size;
-  uint64_t        numEntries;
-  uint64_t        *h_reference;
-  uint64_t        **d_reference;
+  /* Data types for a Plain Reference */
+  uint64_t        numEntriesPlain;
+  uint64_t        *h_reference_plain;
+  uint64_t        **d_reference_plain;
+  /* Data types for a Masked Reference */
+  uint64_t        numEntriesMasked;
+  uint64_t		  *h_reference_masked;
+  uint64_t        **d_reference_masked;
+  /* Memory allocation configuration */
   memory_stats_t  hostAllocStats;
   memory_alloc_t  *memorySpace;
   gpu_module_t    activeModules;
@@ -41,7 +60,7 @@ typedef struct {
 
 
 /* Get information functions */
-gpu_error_t gpu_reference_get_size(gpu_reference_buffer_t* const reference, size_t *bytesPerReference);
+size_t		gpu_reference_get_size(gpu_reference_buffer_t* const reference, size_t* const referenceSize, const gpu_module_t activeModules);
 
 /* String basic functions */
 uint64_t    gpu_char_to_bin_ASCII(const unsigned char base);

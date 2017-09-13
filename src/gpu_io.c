@@ -13,6 +13,40 @@
 #include "../include/gpu_io.h"
 
 /************************************************************
+Basic primitives for input/output
+************************************************************/
+
+gpu_error_t gpu_io_read_buffered(int fp, void* const buffer, const size_t bytesRequest)
+{
+  const uint32_t numRequests  = GPU_DIV_CEIL(bytesRequest, GPU_FILE_SIZE_BLOCK);
+  size_t result, numBytesRequested = 0;
+  uint32_t idRequest;
+  for(idRequest = 0; idRequest < numRequests; ++idRequest){
+    const size_t requestSize = GPU_MIN(GPU_FILE_SIZE_BLOCK, bytesRequest - numBytesRequested);
+    result = read(fp, buffer + numBytesRequested, requestSize);
+    if (result != requestSize) return (E_READING_FILE);
+    numBytesRequested += requestSize;
+  }
+  // Succeed
+  return (SUCCESS);
+}
+
+gpu_error_t gpu_io_write_buffered(int fp, void* const buffer, const size_t bytesRequest)
+{
+  const uint32_t numRequests  = GPU_DIV_CEIL(bytesRequest, GPU_FILE_SIZE_BLOCK);
+  size_t result, numBytesRequested = 0;
+  uint32_t idRequest;
+  for(idRequest = 0; idRequest < numRequests; ++idRequest){
+    const size_t requestSize = GPU_MIN(GPU_FILE_SIZE_BLOCK, bytesRequest - numBytesRequested);
+    result = write(fp, buffer + numBytesRequested, requestSize);
+    if (result != requestSize) return (E_WRITING_FILE);
+    numBytesRequested += requestSize;
+  }
+  // Succeed
+  return (SUCCESS);
+}
+
+/************************************************************
 Primitives for input/output
 ************************************************************/
 
@@ -124,7 +158,7 @@ gpu_error_t gpu_io_load_index_specs_PROFILE(const char* const fn, gpu_index_buff
 }
 
 gpu_error_t gpu_io_load_index_PROFILE(const char* const fn, gpu_index_buffer_t* const index,
-									                    const gpu_module_t activeModules)
+									  const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
 
@@ -141,7 +175,7 @@ gpu_error_t gpu_io_load_index_PROFILE(const char* const fn, gpu_index_buffer_t* 
 }
 
 gpu_error_t gpu_io_load_reference_specs_MFASTA(const char* const fn, gpu_reference_buffer_t* const reference,
-											                         const gpu_module_t activeModules)
+											   const gpu_module_t activeModules)
 {
   FILE *fp = NULL;
   uint64_t sizeFile = 0;
@@ -153,14 +187,14 @@ gpu_error_t gpu_io_load_reference_specs_MFASTA(const char* const fn, gpu_referen
   sizeFile = ftell(fp);
 
   reference->size = sizeFile;
-  reference->numEntries = GPU_DIV_CEIL(reference->size, GPU_REFERENCE_CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
+  reference->numEntriesPlain = GPU_DIV_CEIL(reference->size, GPU_REFERENCE_PLAIN__CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
 
   fclose(fp);
   return (SUCCESS);
 }
 
 gpu_error_t gpu_io_load_reference_MFASTA(const char* const fn, gpu_reference_buffer_t* const reference,
-									                       const gpu_module_t activeModules)
+									     const gpu_module_t activeModules)
 {
   FILE *fp = NULL;
   char lineFile[GPU_FILE_SIZE_LINES], *tmp_reference;
@@ -190,7 +224,7 @@ gpu_error_t gpu_io_load_reference_MFASTA(const char* const fn, gpu_reference_buf
   }
 
   reference->size = position;
-  reference->numEntries = GPU_DIV_CEIL(reference->size, GPU_REFERENCE_CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
+  reference->numEntriesPlain = GPU_DIV_CEIL(reference->size, GPU_REFERENCE_PLAIN__CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
   GPU_ERROR(gpu_reference_transform(reference, tmp_reference, GPU_REF_ASCII, activeModules));
 
   fclose(fp);
@@ -199,7 +233,7 @@ gpu_error_t gpu_io_load_reference_MFASTA(const char* const fn, gpu_reference_buf
 }
 
 gpu_error_t gpu_io_load_reference_specs_PROFILE(const char* const fn, gpu_reference_buffer_t* const reference,
-												                        const gpu_module_t activeModules)
+												const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
 
@@ -216,7 +250,7 @@ gpu_error_t gpu_io_load_reference_specs_PROFILE(const char* const fn, gpu_refere
 }
 
 gpu_error_t gpu_io_load_reference_PROFILE(const char* const fn, gpu_reference_buffer_t* const reference,
-										                      const gpu_module_t activeModules)
+										  const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
 
@@ -233,7 +267,7 @@ gpu_error_t gpu_io_load_reference_PROFILE(const char* const fn, gpu_reference_bu
 }
 
 gpu_error_t gpu_io_save_reference_PROFILE(const char* const fn, const gpu_reference_buffer_t* const reference,
-										                      const gpu_module_t activeModules)
+										  const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_WRONLY;
 
@@ -250,7 +284,7 @@ gpu_error_t gpu_io_save_reference_PROFILE(const char* const fn, const gpu_refere
 }
 
 gpu_error_t gpu_io_load_index_specs_GEM_FULL(const char* const fn, gpu_index_buffer_t* const index,
-										                         const gpu_module_t activeModules)
+										     const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
   off64_t currentOffset = 0, fileOffsetFMIndex = 0, fileOffsetSAIndex = 0, fileOffsetRef = 0;
@@ -286,7 +320,7 @@ gpu_error_t gpu_io_load_index_specs_GEM_FULL(const char* const fn, gpu_index_buf
 }
 
 gpu_error_t gpu_io_load_index_GEM_FULL(const char* const fn, gpu_index_buffer_t* const index,
-									                     const gpu_module_t activeModules)
+									   const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
   off64_t currentOffset = 0, fileOffsetFMIndex = 0, fileOffsetSAIndex = 0, fileOffsetRef = 0;
@@ -322,7 +356,7 @@ gpu_error_t gpu_io_load_index_GEM_FULL(const char* const fn, gpu_index_buffer_t*
 }
 
 gpu_error_t gpu_io_save_index_GEM_FULL(const char* const fn, const gpu_index_buffer_t* const index,
-									                     const gpu_module_t activeModules)
+									   const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_WRONLY;
   gpu_module_t storedModules = index->activeModules & activeModules;
@@ -359,7 +393,7 @@ gpu_error_t gpu_io_save_index_GEM_FULL(const char* const fn, const gpu_index_buf
 }
 
 gpu_error_t gpu_io_load_reference_specs_GEM_FULL(const char* const fn, gpu_reference_buffer_t* const reference,
-												                         const gpu_module_t activeModules)
+												 const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
   off64_t currentOffset = 0, fileOffsetFMIndex = 0, fileOffsetSAIndex = 0, fileOffsetRef = 0;
@@ -387,7 +421,7 @@ gpu_error_t gpu_io_load_reference_specs_GEM_FULL(const char* const fn, gpu_refer
 }
 
 gpu_error_t gpu_io_load_reference_GEM_FULL(const char* const fn, gpu_reference_buffer_t* const reference,
-										                       const gpu_module_t activeModules)
+										   const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_RDONLY;
   off64_t currentOffset = 0, fileOffsetFMIndex = 0, fileOffsetSAIndex = 0, fileOffsetRef = 0;
@@ -415,7 +449,7 @@ gpu_error_t gpu_io_load_reference_GEM_FULL(const char* const fn, gpu_reference_b
 }
 
 gpu_error_t gpu_io_save_reference_GEM_FULL(const char* const fn, const gpu_reference_buffer_t* const reference,
-										                       const gpu_module_t activeModules)
+										   const gpu_module_t activeModules)
 {
   int fp = 0, openMode = GPU_FILE_BASIC_MODE | O_WRONLY;
   off64_t currentOffset = 0, fileOffsetFMIndex = 0, fileOffsetSAIndex = 0, fileOffsetRef = 0;
@@ -508,9 +542,10 @@ void gpu_io_save_indexed_structures_GEM_(const char* const fn, const gpu_gem_fmi
 
   // Initialize the reference structure
   GPU_ERROR(gpu_reference_init_dto(&ref));
-  ref.activeModules = activeModules & GPU_REFERENCE;
-  ref.size          = gemRef->ref_length * 2; //Forward & reverse genomes
-  ref.numEntries    = GPU_DIV_CEIL(ref.size, GPU_REFERENCE_CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
+  ref.activeModules 	= activeModules & GPU_REFERENCE;
+  ref.size          	= gemRef->ref_length * 2; //Forward & reverse genomes
+  ref.numEntriesPlain   = GPU_DIV_CEIL(ref.size, GPU_REFERENCE_PLAIN__CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
+  ref.numEntriesMasked  = GPU_DIV_CEIL(ref.size, GPU_REFERENCE_MASKED__CHARS_PER_ENTRY) + GPU_REFERENCE_END_PADDING;
 
   // Initialize the index (SA & FMI) structure
   GPU_ERROR(gpu_index_init_dto(&index, activeModules & GPU_INDEX));

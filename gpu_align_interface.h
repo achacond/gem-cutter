@@ -32,12 +32,11 @@
 #define GPU_CIGAR_DELETION    4
 
 typedef char  gpu_bpm_align_cigar_event_t;
-typedef char  gpu_bpm_align_cand_entry_t;
 typedef char  gpu_bpm_align_qry_entry_t;
 
 typedef struct{
   char      event;
-  uint32_t	occurrences;
+  uint16_t	occurrences;
 }gpu_bpm_align_cigar_entry_t;
 
 typedef struct{
@@ -50,7 +49,7 @@ typedef struct { /* each row 1 PEQ Entry (128bits) */
 } gpu_bpm_align_peq_entry_t;
 
 typedef struct {
-  uint32_t posEntryBase;
+  uint64_t position;
   uint32_t idQuery;
   uint32_t size;
   bool     leftGapAlign;
@@ -80,7 +79,6 @@ typedef struct {
 gpu_bpm_align_qry_entry_t*   gpu_bpm_align_buffer_get_queries_(const void* const bpmBuffer);
 gpu_bpm_align_peq_entry_t*   gpu_bpm_align_buffer_get_peq_entries_(const void* const bpmBuffer);
 gpu_bpm_align_qry_info_t*    gpu_bpm_align_buffer_get_queries_info_(const void* const bpmBuffer);
-gpu_bpm_align_cand_entry_t*  gpu_bpm_align_buffer_get_candidates_(const void* const bpmBuffer);
 gpu_bpm_align_cand_info_t*   gpu_bpm_align_buffer_get_candidates_info_(const void* const bpmBuffer);
 gpu_bpm_align_cigar_entry_t* gpu_bpm_align_buffer_get_cigars_(const void* const bpmBuffer);
 gpu_bpm_align_cigar_info_t*  gpu_bpm_align_buffer_get_cigars_info_(const void* const bpmBuffer);
@@ -100,10 +98,10 @@ uint32_t gpu_bpm_align_buffer_get_max_candidate_bases_(const void* const bpmBuff
  * Main functions
  */
 /* BPM align buffer primitives */
-void gpu_bpm_align_init_buffer_(void* const bpmBuffer, const uint32_t averageQuerySize, const uint32_t averageCandidateSize, const uint32_t candidatesPerQuery);
-void gpu_bpm_align_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntries, const uint32_t numQueryBases, const uint32_t numCandidateBases,
+void gpu_bpm_align_init_buffer_(void* const bpmBuffer, const uint32_t averageQuerySize, const uint32_t candidatesPerQuery);
+void gpu_bpm_align_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntries, const uint32_t numQueryBases,
                                 const uint32_t numQueries, const uint32_t numCandidates, const uint32_t queryBinSize);
 void gpu_bpm_align_receive_buffer_(void* const bpmBuffer);
-void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t numPEQEntries, const uint32_t numQueryBases, const uint32_t numCandidateBases,
+void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t numPEQEntries, const uint32_t numQueryBases,
                                             const uint32_t numQueries, const uint32_t numCandidates);
 #endif /* GPU_BPM_ALIGN_INTERFACE_H_ */

@@ -28,6 +28,9 @@
 #include "gpu_reference.h"
 #include "gpu_index.h"
 
+/* I/O Primitives to read/write in buffered files */
+gpu_error_t gpu_io_read_buffered(int fp, void* const buffer, const size_t bytesRequest);
+gpu_error_t gpu_io_write_buffered(int fp, void* const buffer, const size_t bytesRequest);
 
 /* Input & Output Multi-FASTA functions (Indexes) */
 gpu_error_t gpu_io_load_specs_BWT_MFASTA(const char* const fn, gpu_index_buffer_t* const index, const gpu_module_t activeModules);

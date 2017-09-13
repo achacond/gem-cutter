@@ -37,7 +37,7 @@ gpu_error_t gpu_module_get_min_memory(gpu_reference_buffer_t* const reference, c
   size_t bytesPerReference = 0, bytesPerFMIndex = 0, bytesPerSAIndex = 0, bytesPerBuffer = 0;
 
   GPU_ERROR(gpu_buffer_get_min_memory_size(&bytesPerBuffer));
-  GPU_ERROR(gpu_reference_get_size(reference, &bytesPerReference));
+  GPU_ERROR(gpu_reference_get_size(reference, &bytesPerReference, GPU_REFERENCE));
   GPU_ERROR(gpu_index_get_size(index, &bytesPerFMIndex, GPU_FMI));
   GPU_ERROR(gpu_index_get_size(index, &bytesPerSAIndex, GPU_SA));
 
