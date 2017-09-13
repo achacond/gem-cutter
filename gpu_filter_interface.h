@@ -39,8 +39,6 @@ typedef enum
  */
 
 /* BPM filter data structures */
-//typedef char      gpu_bmp_filter_cand_entry_t;
-
 typedef struct { /* each row 1 PEQ Entry (128bits) */
   uint32_t bitmap[GPU_BPM_FILTER_PEQ_ALPHABET_SIZE][GPU_BPM_FILTER_PEQ_SUBENTRIES];
 } gpu_bpm_filter_qry_entry_t;

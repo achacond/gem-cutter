@@ -301,7 +301,6 @@ gpu_error_t gpu_reference_read(int fp, gpu_reference_buffer_t* const reference, 
   return (SUCCESS);
 }
 
-
 gpu_error_t gpu_reference_write(int fp, const gpu_reference_buffer_t* const reference, const gpu_module_t activeModules)
 {
   // Request size definition
@@ -473,7 +472,6 @@ gpu_error_t gpu_reference_allocate(gpu_reference_buffer_t *reference, const gpu_
   return(SUCCESS);
 }
 
-
 gpu_error_t gpu_reference_load(gpu_reference_buffer_t *reference, const gpu_reference_dto_t* const referenceRaw,
                                const gpu_module_t activeModules)
 {
@@ -487,6 +485,7 @@ gpu_error_t gpu_reference_load(gpu_reference_buffer_t *reference, const gpu_refe
   return(SUCCESS);
 }
 
+//
 gpu_error_t gpu_reference_transfer_CPU_to_GPUs(gpu_reference_buffer_t* const reference, gpu_device_info_t** const devices,
                                                const gpu_module_t activeModules)
 {
@@ -548,7 +547,6 @@ gpu_error_t gpu_reference_free_host(gpu_reference_buffer_t* const reference)
   // Succeed
   return(SUCCESS);
 }
-
 
 gpu_error_t gpu_reference_free_unused_host(gpu_reference_buffer_t* const reference, gpu_device_info_t** const devices,
                                            const gpu_module_t activeModules)

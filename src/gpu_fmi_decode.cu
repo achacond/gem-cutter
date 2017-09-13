@@ -123,7 +123,6 @@ gpu_error_t gpu_fmi_decode_process_buffer(gpu_buffer_t* const mBuff)
   gpu_device_kernel_thread_configuration(device, numThreads, &blocksPerGrid, &threadsPerBlock);
   // Sanity-check (checks buffer overflowing)
   if((numDecodings > numMaxInitPositions) || (numDecodings > numMaxEndPositions)){
-    printf("DECODING FMI textPositions.numDecodings=%u, endPositions.numDecodings=%u, maxDecodings=%u \n", numDecodings, mBuff->data.decode.endPositions.numDecodings, mBuff->data.decode.numMaxTextPositions);
     return(E_OVERFLOWING_BUFFER);
   }
 

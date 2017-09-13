@@ -19,8 +19,10 @@ typedef struct {
   uint32_t            *d_reorderBuffer;
   uint32_t            *h_initPosPerBucket;
   uint32_t            *h_initWarpPerBucket;
+  uint32_t			      *h_endPosPerBucket;
   uint32_t            *d_initPosPerBucket;
   uint32_t            *d_initWarpPerBucket;
+  uint32_t			      *d_endPosPerBucket;
 } gpu_scheduler_buffer_t;
 
 

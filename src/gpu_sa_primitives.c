@@ -23,8 +23,4 @@ gpu_sa_decode_text_pos_t* gpu_sa_decode_buffer_get_ref_pos_(const void* const sa
   return(mBuff->data.decode.textPositions.h_textPos);
 }
 
-//TODO implementar un buffer solo para el SA.
-//     poder hacer la conversion de SA por a REF pos
-//     con una llamada independiente
-
 #endif /* GPU_SA_PRIMITIVES_C_ */

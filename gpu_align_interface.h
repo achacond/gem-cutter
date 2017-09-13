@@ -67,9 +67,9 @@ typedef struct {
   // Return Cigar results
   gpu_bpm_align_coord_t       initCood;
   gpu_bpm_align_coord_t       endCood;
-  uint32_t 				      matchEffLenght;
-  uint32_t 				      cigarStartPos;
-  uint32_t				      cigarLenght;
+  uint32_t 				            matchEffLenght;
+  uint32_t 				            cigarStartPos;
+  uint32_t				            cigarLenght;
 } gpu_bpm_align_cigar_info_t;
 
 /*

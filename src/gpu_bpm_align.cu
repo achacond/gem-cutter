@@ -79,15 +79,15 @@ GPU_INLINE __device__ void gpu_bpm_align_backtrace(const uint32_t* const dpPV, c
   // Master thread saves the last part of the cigar
   if (intraQueryThreadIdx  == masterThreadIdx){
     const gpu_bpm_align_coord_t initCood =  {x + 1, y + 1};
-	// Saving the last CIGAR status event
-	dpCIGAR[sizeQuery - cigarLenght].event       = event;
-	dpCIGAR[sizeQuery - cigarLenght].occurrences = accNum;
-	cigarLenght++;
+    // Saving the last CIGAR status event
+    dpCIGAR[sizeQuery - cigarLenght].event       = event;
+    dpCIGAR[sizeQuery - cigarLenght].occurrences = accNum;
+    cigarLenght++;
     // Saving the remainder semi-global deletion events
     if(y >= 0){
       const uint32_t numEvents = y + 1;
-	  dpCIGAR[sizeQuery - cigarLenght].event       = GPU_CIGAR_DELETION;
-	  dpCIGAR[sizeQuery - cigarLenght].occurrences = numEvents;
+      dpCIGAR[sizeQuery - cigarLenght].event       = GPU_CIGAR_DELETION;
+      dpCIGAR[sizeQuery - cigarLenght].occurrences = numEvents;
       cigarLenght++;
     }
     // Returning back-trace results
@@ -192,8 +192,9 @@ GPU_INLINE __device__ void gpu_bpm_align_local_kernel(const gpu_bpm_align_qry_en
                                                       gpu_bpm_align_cigar_entry_t * const d_cigars, gpu_bpm_align_cigar_info_t* const d_cigarInfo,
                                                       const uint32_t idCandidate, const uint32_t intraQueryThreadIdx, const uint32_t threadsPerQuery)
 {
-  const uint32_t sizeCandidate                       = d_candidateInfo[idCandidate].size;
-  const uint64_t posCandidate                        = d_candidateInfo[idCandidate].position;
+  const uint32_t masterThreadIdx                      = threadsPerQuery - 1;
+  const uint32_t sizeCandidate                        = d_candidateInfo[idCandidate].size;
+  const uint64_t posCandidate                         = d_candidateInfo[idCandidate].position;
   if((posCandidate + sizeCandidate) < sizeReference){
     // Data characterization
     const uint32_t idQuery                             = d_candidateInfo[idCandidate].idQuery;
@@ -204,7 +205,7 @@ GPU_INLINE __device__ void gpu_bpm_align_local_kernel(const gpu_bpm_align_qry_en
     // Data Buffers
     const uint64_t* const query                        = (uint64_t*) (d_queries + d_queryInfo[idQuery].posEntryBase);
     const gpu_bpm_align_device_qry_entry_t* const PEQs = d_PEQs + d_queryInfo[idQuery].posEntryPEQ + intraQueryThreadIdx;
-    gpu_bpm_align_cigar_entry_t* const cigar           = d_cigars + d_cigarInfo[idCigar].offsetCigarStart;
+    gpu_bpm_align_cigar_entry_t* const cigar           = d_cigars + offsetCigarStart;
     gpu_bpm_align_cigar_info_t* const cigarInfo        = d_cigarInfo + idCigar;
 
     // Local Memory (DP Matrix allocated in the CUDA stack)
@@ -227,11 +228,13 @@ GPU_INLINE __device__ void gpu_bpm_align_local_kernel(const gpu_bpm_align_qry_en
 		                    intraQueryThreadIdx, threadsPerQuery, &initCood, &cigarLenght);
 
     // Return the cigar results
-    cigarInfo->initCood       = initCood;
-    cigarInfo->endCood.x      = minColumn;
-    cigarInfo->endCood.y      = sizeQuery - 1;
-    cigarInfo->cigarStartPos  = offsetCigarStart + sizeQuery - cigarLenght + 1;
-    cigarInfo->cigarLenght    = cigarLenght;
+    if (intraQueryThreadIdx  == masterThreadIdx){
+      cigarInfo->initCood       = initCood;
+      cigarInfo->endCood.x      = minColumn;
+      cigarInfo->endCood.y      = sizeQuery - 1;
+      cigarInfo->cigarStartPos  = offsetCigarStart + sizeQuery - cigarLenght + 1;
+      cigarInfo->cigarLenght    = cigarLenght;
+    }
   }
 }
 
@@ -239,23 +242,25 @@ __global__ void gpu_bpm_align_kernel(const gpu_bpm_align_qry_entry_t* const d_qu
                                      const gpu_bpm_align_cand_info_t* const d_candidateInfo, const uint32_t* const d_reorderBuffer,
                                      const uint64_t* const d_referencePlain, const uint64_t* const d_referenceMasked, const uint64_t referenceSize,
                                      gpu_bpm_align_cigar_entry_t * const d_cigars, gpu_bpm_align_cigar_info_t* const d_cigarInfo, const uint32_t numCigars,
-                                     const uint32_t* const d_initPosPerBucket, const uint32_t* const d_initWarpPerBucket, const bool updateScheduling)
+                                     const uint32_t* const d_initPosPerBucket, const uint32_t* const d_initWarpPerBucket, const uint32_t* const d_endPosPerBucket, const bool updateScheduling)
 {
   // Thread Identification
   const uint32_t globalThreadIdx = gpu_get_thread_idx();
-  uint32_t idCandidate = 0, intraQueryThreadIdx = 0, threadsPerQuery = 0;
+  uint32_t intraQueryThreadIdx = 0, threadsPerQuery = 0;
+  // Identification tracking of the candidate task ID
+  uint32_t idCandidate;
   // Rescheduling thread mapping and thread set distribution
-  gpu_scheduler_scatter_work(globalThreadIdx, d_initWarpPerBucket, d_initPosPerBucket,
+  gpu_scheduler_scatter_work(globalThreadIdx, d_initWarpPerBucket, d_initPosPerBucket, d_endPosPerBucket,
                              &idCandidate, &intraQueryThreadIdx, &threadsPerQuery);
-  // Update the buffer input/output for the thread re-scheduling
-  idCandidate  = (updateScheduling) ? d_reorderBuffer[idCandidate] : idCandidate;
   // Call to the device align BPM process for the active threads
-  if (idCandidate < numCigars){
-    // Update the buffer input/output for the thread re-scheduling
-    gpu_bpm_align_local_kernel(d_queries, d_PEQs, d_queryInfo, d_candidateInfo,
-    		                   d_referencePlain, d_referenceMasked, referenceSize,
-    		                   d_cigars, d_cigarInfo,
-                               idCandidate, intraQueryThreadIdx, threadsPerQuery);
+  if ((idCandidate < numCigars) && (idCandidate != GPU_SCHEDULER_DISABLED_TASK)){
+	// Update the buffer input/output for the thread re-scheduling
+	idCandidate  = (updateScheduling) ? d_reorderBuffer[idCandidate] : idCandidate;
+  // Update the buffer input/output for the thread re-scheduling
+  gpu_bpm_align_local_kernel(d_queries, d_PEQs, d_queryInfo, d_candidateInfo,
+    		                     d_referencePlain, d_referenceMasked, referenceSize,
+    		                     d_cigars, d_cigarInfo,
+                             idCandidate, intraQueryThreadIdx, threadsPerQuery);
   }
 }
 
@@ -284,22 +289,23 @@ gpu_error_t gpu_bpm_align_process_buffer(gpu_buffer_t *mBuff)
   const uint32_t                                  maxCandidates     =  mBuff->data.abpm.maxCandidates;
   const uint32_t                                  maxCigars         =  mBuff->data.abpm.maxCigars;
   // Cigar results information
-  const uint32_t                                  numCigarSched     = (mBuff->data.abpm.queryBinning) ? cigar->numReorderedCigars : cigar->numCigars;
-  gpu_bpm_align_cigar_info_t*                     cigarsInfo        = (mBuff->data.abpm.queryBinning) ? cigar->d_reorderCigars : cigar->d_cigarsInfo;
+  const uint32_t                                  numCigars         = cigar->numCigars;
+  gpu_bpm_align_cigar_info_t*                     cigarsInfo        = cigar->d_cigarsInfo;
 
   dim3 blocksPerGrid, threadsPerBlock;
   const uint32_t numThreads = rebuff->numWarps * GPU_WARP_SIZE;
   gpu_device_kernel_thread_configuration(device, numThreads, &blocksPerGrid, &threadsPerBlock);
   // Sanity-check (checks buffer overflowing)
   if((numQueries > maxQueries) || (numCandidates > maxCandidates) || (numQueryPEQs > maxQueryPEQs) ||
-     (numQueryBases > maxQueryBases) || (numCigarSched > maxCigars))
+     (numQueryBases > maxQueryBases) || (numCigars > maxCigars))
     return(E_OVERFLOWING_BUFFER);
   // Launching the BPM align kernel on device
   gpu_bpm_align_kernel<<<blocksPerGrid, threadsPerBlock, 0, idStream>>>(qry->d_queries, (gpu_bpm_align_device_qry_entry_t *) qry->d_peq, qry->d_qinfo,
                                                                         cand->d_candidatesInfo, rebuff->d_reorderBuffer,
                                                                         ref->d_reference_plain[idSupDev], ref->d_reference_masked[idSupDev], ref->size,
-                                                                        cigar->d_cigars, cigarsInfo, numCigarSched,
-                                                                        rebuff->d_initPosPerBucket, rebuff->d_initWarpPerBucket, mBuff->data.abpm.queryBinning);
+                                                                        cigar->d_cigars, cigarsInfo, numCigars,
+                                                                        rebuff->d_initPosPerBucket, rebuff->d_initWarpPerBucket, rebuff->d_endPosPerBucket,
+                                                                        mBuff->data.abpm.queryBinning);
   return(SUCCESS);
 }
 
