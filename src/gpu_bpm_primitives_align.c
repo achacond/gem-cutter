@@ -193,18 +193,42 @@ void gpu_bpm_align_init_buffer_(void* const bpmBuffer, const uint32_t averageQue
   // Set the corresponding buffer layout
   gpu_bpm_align_reallocate_host_buffer_layout(mBuff);
   gpu_bpm_align_reallocate_device_buffer_layout(mBuff);
+
+  printf("    [Resize id: %d - size: %d kBytes (averageQuerySize %d - candidatesPerQuery %d)] Queries:X / %d (QueryBases:X / %d + QueryPEQ:X / %d) - Candidates:X / %d \n",
+		  mBuff->idBuffer, (uint32_t) mBuff->sizeBuffer / 1024,
+          averageQuerySize, candidatesPerQuery,
+		  gpu_bpm_align_buffer_get_max_queries_(bpmBuffer),
+		  gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer),
+		  gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer),
+		  gpu_bpm_align_buffer_get_max_candidates_(bpmBuffer));
+
 }
 
 void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t totalPEQEntries, const uint32_t totalQueryBases,
 											const uint32_t totalQueries, const uint32_t totalCandidates)
 {
+  printf("RELOCATING BUFFER \n");
   // Buffer re-initialization
   gpu_buffer_t* const mBuff = (gpu_buffer_t *) bpmBuffer;
   const uint32_t averageQuerySize       = (totalPEQEntries * GPU_BPM_ALIGN_PEQ_ENTRY_LENGTH) / totalQueries;
   const uint32_t candidatesPerQuery     = totalCandidates / totalQueries;
 
+  printf("    [RESIZE BUFFER %d] Queries:%d / %d (QueryBases:%d / %d + QueryPEQ:%d / %d) - Candidates:%d / %d \n",
+		  mBuff->idBuffer,
+		  totalQueries,    gpu_bpm_align_buffer_get_max_queries_(bpmBuffer),
+		  totalQueryBases, gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer),
+		  totalPEQEntries, gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer),
+		  totalCandidates, gpu_bpm_align_buffer_get_max_candidates_(bpmBuffer));
+
   // Remap the buffer layout with new information trying to fit better
   gpu_bpm_align_init_buffer_(bpmBuffer, averageQuerySize, candidatesPerQuery);
+  printf("    [Resize id: %d - size: %d kBytes (averageQuerySize %d - candidatesPerQuery %d)] Queries:%d / %d (QueryBases:%d / %d + QueryPEQ:%d / %d) - Candidates:%d / %d \n",
+		  mBuff->idBuffer, (uint32_t)mBuff->sizeBuffer / 1024,
+          averageQuerySize, candidatesPerQuery,
+		  totalQueries,    gpu_bpm_align_buffer_get_max_queries_(bpmBuffer),
+		  totalQueryBases, gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer),
+		  totalPEQEntries, gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer),
+		  totalCandidates, gpu_bpm_align_buffer_get_max_candidates_(bpmBuffer));
   // Checking if we need to reallocate a bigger buffer
   if( (totalPEQEntries     > gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer))     &&
       (totalQueryBases     > gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer))     &&
@@ -225,6 +249,13 @@ void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t tota
     CUDA_ERROR(cudaMalloc((void**) &mBuff->d_rawData, mBuff->sizeBuffer));
     // Remap the buffer layout with the new size
     gpu_bpm_align_init_buffer_(bpmBuffer, averageQuerySize, candidatesPerQuery);
+  printf("    [Resize id: %d - size: %d kBytes (averageQuerySize %d - candidatesPerQuery %d)] Queries:%d / %d (QueryBases:%d / %d + QueryPEQ:%d / %d) - Candidates:%d / %d \n",
+		  mBuff->idBuffer, (uint32_t)mBuff->sizeBuffer / 1024,
+          averageQuerySize, candidatesPerQuery,
+		  totalQueries,    gpu_bpm_align_buffer_get_max_queries_(bpmBuffer),
+		  totalQueryBases, gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer),
+		  totalPEQEntries, gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer),
+		  totalCandidates, gpu_bpm_align_buffer_get_max_candidates_(bpmBuffer));
   }
 }
 
@@ -233,7 +264,7 @@ Functions to send & process a BPM buffer to GPU
 ************************************************************/
 
 gpu_error_t gpu_bpm_align_reorder_process(const gpu_bpm_align_queries_buffer_t* const qry, const gpu_bpm_align_candidates_buffer_t* const cand,
-                                    	    gpu_scheduler_buffer_t* const rebuff, gpu_bpm_align_cigars_buffer_t* const res)
+                                    	  gpu_scheduler_buffer_t* const rebuff, gpu_bpm_align_cigars_buffer_t* const res)
 {
   const uint32_t numBuckets = GPU_BPM_ALIGN_NUM_BUCKETS_FOR_BINNING;
   uint32_t idBucket, idCandidate, idBuff;
@@ -260,6 +291,7 @@ gpu_error_t gpu_bpm_align_reorder_process(const gpu_bpm_align_queries_buffer_t* 
     rebuff->h_initPosPerBucket[idBucket] = rebuff->elementsPerBuffer;
     rebuff->h_endPosPerBucket[idBucket] = rebuff->elementsPerBuffer + numCandidatesPerBucket[idBucket];
     rebuff->elementsPerBuffer += numWarpsPerBucket[idBucket] * numQueriesPerWarp;
+    printf("[idBucket %d] numCandidatesPerBucket=%d - numWarpsPerBucket=%d ---- h_initPosPerBucket=%d - h_endPosPerBucket=%d\n", idBucket, numCandidatesPerBucket[idBucket], numWarpsPerBucket[idBucket], rebuff->h_initPosPerBucket[idBucket], rebuff->h_endPosPerBucket[idBucket]);
   }
   // Fill the start position warps for each bucket
   for(idBucket = 1; idBucket < rebuff->numBuckets; idBucket++)
@@ -283,13 +315,13 @@ gpu_error_t gpu_bpm_align_reorder_process(const gpu_bpm_align_queries_buffer_t* 
 
 gpu_error_t gpu_bpm_align_reordering_buffer(gpu_buffer_t *mBuff)
 {
-  const uint32_t                           		   binSize  = mBuff->data.abpm.queryBinSize;
-  const bool                               		   binning  = mBuff->data.abpm.queryBinning;
+  const uint32_t                           		 binSize  = mBuff->data.abpm.queryBinSize;
+  const bool                               		 binning  = mBuff->data.abpm.queryBinning;
   const gpu_bpm_align_queries_buffer_t* const    qry      = &mBuff->data.abpm.queries;
   const gpu_bpm_align_candidates_buffer_t* const cand     = &mBuff->data.abpm.candidates;
-  gpu_bpm_align_cigars_buffer_t* const 		       res      = &mBuff->data.abpm.cigars;
-  gpu_scheduler_buffer_t* const    		           rebuff   = &mBuff->data.abpm.reorderBuffer;
-  uint32_t                           			       idBucket;
+  gpu_bpm_align_cigars_buffer_t* const 		     res      = &mBuff->data.abpm.cigars;
+  gpu_scheduler_buffer_t* const    		         rebuff   = &mBuff->data.abpm.reorderBuffer;
+  uint32_t                           			 idBucket;
   //Re-initialize the reorderBuffer (to reuse the buffer)
   rebuff->numBuckets          = GPU_BPM_ALIGN_NUM_BUCKETS_FOR_BINNING;
   rebuff->elementsPerBuffer   = 0;
@@ -381,6 +413,7 @@ gpu_error_t gpu_bpm_align_transfer_GPU_to_CPU(gpu_buffer_t *mBuff)
   gpu_bpm_align_cigars_buffer_t   *res      = &mBuff->data.abpm.cigars;
   size_t                          cpySize;
   // Avoiding transferences of the intermediate results (binning input work regularization)
+  printf("numCigarEntries %d - maxReorderBuffer %d\n", res->numCigarEntries, mBuff->data.abpm.maxReorderBuffer);
   cpySize = ((void *) (res->d_cigars + res->numCigarEntries)) - ((void *) res->d_cigarsInfo);
   CUDA_ERROR(cudaMemcpyAsync(res->h_cigarsInfo, res->d_cigarsInfo, cpySize, cudaMemcpyDeviceToHost, idStream));
   // Succeed
@@ -410,6 +443,48 @@ void gpu_bpm_align_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntr
   }
   mBuff->data.abpm.cigars.numCigarEntries = numCigarEntries;
 
+  printf("    [SENDING BUFFER %d] Queries:%f (QueryBases:%f + QueryPEQ:%f) - Candidates:%f - Cigars:%f (CigarEntries:%f)\n", mBuff->idBuffer,
+		  ((float)mBuff->data.abpm.queries.numQueries / (float) mBuff->data.abpm.maxQueries)           * 100.0,
+		  ((float)mBuff->data.abpm.queries.totalQueriesBases / (float) mBuff->data.abpm.maxQueryBases) * 100.0,
+		  ((float)mBuff->data.abpm.queries.totalQueriesPEQs / (float) mBuff->data.abpm.maxPEQEntries)  * 100.0,
+		  ((float)mBuff->data.abpm.candidates.numCandidates / (float) mBuff->data.abpm.maxCandidates)  * 100.0,
+          ((float)mBuff->data.abpm.cigars.numCigars / (float) mBuff->data.abpm.maxCigars)              * 100.0,
+		  ((float)mBuff->data.abpm.cigars.numCigarEntries / (float) mBuff->data.abpm.maxCigarEntries)  * 100.0);
+
+  printf("    [SENDING BUFFER %d] Queries:%d / %d (QueryBases:%d / %d + QueryPEQ:%d / %d) - Candidates:%d / %d - Cigars:%d / %d (CigarEntries:%d / %d)\n", mBuff->idBuffer,
+		  mBuff->data.abpm.queries.numQueries, mBuff->data.abpm.maxQueries,
+		  mBuff->data.abpm.queries.totalQueriesBases, mBuff->data.abpm.maxQueryBases,
+		  mBuff->data.abpm.queries.totalQueriesPEQs, mBuff->data.abpm.maxPEQEntries,
+		  mBuff->data.abpm.candidates.numCandidates, mBuff->data.abpm.maxCandidates,
+          mBuff->data.abpm.cigars.numCigars, mBuff->data.abpm.maxCigars,
+		  mBuff->data.abpm.cigars.numCigarEntries, mBuff->data.abpm.maxCigarEntries);
+
+  printf("    [SENDING BUFFER %d] Queries Estimation: %d \n", mBuff->idBuffer, mBuff->data.abpm.candidates.h_candidatesInfo[mBuff->data.abpm.candidates.numCandidates-1].idQuery);
+
+  for(uint32_t idQuery = 0; idQuery < numQueries; idQuery++){
+	const uint32_t posEntryBase = mBuff->data.abpm.queries.h_qinfo[idQuery].posEntryBase;
+	const uint32_t size         = mBuff->data.abpm.queries.h_qinfo[idQuery].size;
+    printf("[IdQuery: %d]", idQuery);
+    for(uint32_t idBase = 0; idBase < size; ++idBase){
+		const uint8_t base_gem = mBuff->data.abpm.queries.h_queries[posEntryBase+idBase];
+    	char base = 'N';
+    	if(base_gem == 0) base = 'A';
+    	if(base_gem == 1) base = 'C';
+    	if(base_gem == 2) base = 'G';
+    	if(base_gem == 3) base = 'T';
+    	printf("%c", base);
+    }
+    printf("\n");
+  }
+
+  // DEBUG
+  for(idCandidate = 0; idCandidate < numCandidates; idCandidate++){
+	const uint32_t position = mBuff->data.abpm.candidates.h_candidatesInfo[idCandidate].position;
+	const uint32_t idQuery = mBuff->data.abpm.candidates.h_candidatesInfo[idCandidate].idQuery;
+	const uint32_t size = mBuff->data.abpm.candidates.h_candidatesInfo[idCandidate].size;
+    printf("[idCandidate: %d] idQuery: %d - Position: %lld - Size: %d\n", idCandidate, idQuery, (long long unsigned int)position, size);
+  }
+
   //Select the device of the Multi-GPU platform
   CUDA_ERROR(cudaSetDevice(mBuff->device[idSupDevice]->idDevice));
   //CPU->GPU Transfers & Process Kernel in Asynchronous way
@@ -419,6 +494,11 @@ void gpu_bpm_align_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntr
   GPU_ERROR(gpu_bpm_align_process_buffer(mBuff));
   //GPU->CPU Transfers
   GPU_ERROR(gpu_bpm_align_transfer_GPU_to_CPU(mBuff));
+
+  for(idCandidate = 0; idCandidate < mBuff->data.abpm.reorderBuffer.elementsPerBuffer; idCandidate++){
+    printf("Reorderbuffer[%d]=%d \n", idCandidate, mBuff->data.abpm.reorderBuffer.h_reorderBuffer[idCandidate]);
+  }
+
 }
 
 /************************************************************
@@ -434,6 +514,17 @@ void gpu_bpm_align_receive_buffer_(void* const bpmBuffer)
   CUDA_ERROR(cudaSetDevice(mBuff->device[idSupDevice]->idDevice));
   //Synchronize Stream (the thread wait for the commands done in the stream)
   CUDA_ERROR(cudaStreamSynchronize(idStream));
+
+  const uint32_t numCigars = mBuff->data.abpm.cigars.numCigars;
+  for(uint32_t idCigar = 0; idCigar<numCigars; ++idCigar){
+	  const uint32_t cigarStartPos = mBuff->data.abpm.cigars.h_cigarsInfo[idCigar].cigarStartPos;
+	  const uint32_t cigarStartEnd = cigarStartPos + mBuff->data.abpm.cigars.h_cigarsInfo[idCigar].cigarLenght;
+	  printf("idCigar %d => startCigar=%d, endCigar=%d \n", idCigar, cigarStartPos, cigarStartEnd);
+	  for(uint32_t id = cigarStartPos; id < cigarStartEnd; id++){
+		  const gpu_bpm_align_cigar_entry_t cigarEntry = mBuff->data.abpm.cigars.h_cigars[id];
+		  printf("id=%d, cEvent=%d, cOcc=%d \n", id, cigarEntry.event, cigarEntry.occurrences);
+	  }
+  }
 }
 
 #endif /* GPU_BPM_PRIMITIVES_ALIGN_C_ */
