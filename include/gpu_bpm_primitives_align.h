@@ -30,8 +30,8 @@ Internal Objects
 *****************************/
 
 typedef struct {
-  uint32_t            		   numCigars;
-  uint32_t            		   numCigarEntries;
+  uint32_t            	       numCigars;
+  uint32_t            	       numCigarEntries;
   gpu_bpm_align_cigar_entry_t *h_cigars;
   gpu_bpm_align_cigar_entry_t *d_cigars;
   gpu_bpm_align_cigar_info_t  *h_cigarsInfo;
@@ -39,15 +39,15 @@ typedef struct {
 } gpu_bpm_align_cigars_buffer_t;
 
 typedef struct {
-  uint32_t             		  numCandidates;
+  uint32_t                    numCandidates;
   gpu_bpm_align_cand_info_t  *h_candidatesInfo;
   gpu_bpm_align_cand_info_t  *d_candidatesInfo;
 } gpu_bpm_align_candidates_buffer_t;
 
 typedef struct {
-  uint32_t              	   totalQueriesPEQs;
-  uint32_t              	   totalQueriesBases;
-  uint32_t              	   numQueries;
+  uint32_t              	     totalQueriesPEQs;
+  uint32_t              	     totalQueriesBases;
+  uint32_t              	     numQueries;
   gpu_bpm_align_qry_entry_t   *h_queries;
   gpu_bpm_align_qry_entry_t   *d_queries;
   gpu_bpm_align_peq_entry_t   *h_peq;
@@ -80,15 +80,15 @@ typedef struct {
   uint32_t                    		  maxQueryBases;
   uint32_t                    		  maxCandidates;
   uint32_t                    		  maxQueries;
-  uint32_t							  maxCandidateSize;
+  uint32_t				  maxCandidateSize;
   uint32_t                    		  maxCigars;
-  uint32_t							  maxCigarEntries;
-  uint32_t							  maxReorderBuffer;
+  uint32_t				  maxCigarEntries;
+  uint32_t				  maxReorderBuffer;
   uint32_t                    		  maxBuckets;
   uint32_t                    		  queryBinSize;
   bool                        		  queryBinning;
-  gpu_bpm_align_queries_buffer_t      queries;
-  gpu_bpm_align_candidates_buffer_t   candidates;
+  gpu_bpm_align_queries_buffer_t          queries;
+  gpu_bpm_align_candidates_buffer_t       candidates;
   gpu_scheduler_buffer_t	          reorderBuffer;
   gpu_bpm_align_cigars_buffer_t 	  cigars;
 } gpu_bpm_align_buffer_t;

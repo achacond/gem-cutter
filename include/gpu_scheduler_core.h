@@ -10,12 +10,14 @@
 #ifndef GPU_SCHEDULER_CORE_H_
 #define GPU_SCHEDULER_CORE_H_
 
-#define GPU_SCHEDULER_DISABLED_TASK		 GPU_UINT32_ONES
+#define GPU_SCHEDULER_DISABLED_TASK      GPU_UINT32_ONES
 #define GPU_SCHEDULER_NONASSIGNED_TASK	(GPU_UINT32_ONES - 1)
 
 extern "C" {
 #include "gpu_commons.h"
 }
+
+#define GPU_MAX_BUCKETS  GPU_WARP_SIZE
 
 typedef struct {
   uint32_t source;
@@ -23,8 +25,9 @@ typedef struct {
 } gpu_task_id_t;
 
 GPU_INLINE __device__ void gpu_scheduler_scatter_work(const uint32_t globalThreadIdx, const uint32_t* const d_initWarpPerBucket,
-		                                              const uint32_t* const d_initPosPerBucket, const uint32_t* const d_endPosPerBucket,
-		                                   	   	   	  uint32_t* const idTaskRes, uint32_t* const intraTaskThreadIdxRes, uint32_t* const threadsPerTaskRes)
+		                                      const uint32_t* const d_initPosPerBucket, const uint32_t* const d_endPosPerBucket,
+                                                      const uint32_t* const d_reorderBuffer, const bool updateScheduling,
+		                                      uint32_t* const idTaskRes, uint32_t* const intraTaskThreadIdxRes, uint32_t* const threadsPerTaskRes)
 {
   //Warp identification of the current cuda thread
   const uint32_t globalWarpIdx = globalThreadIdx / GPU_WARP_SIZE;
@@ -33,7 +36,7 @@ GPU_INLINE __device__ void gpu_scheduler_scatter_work(const uint32_t globalThrea
   uint32_t idTask = GPU_SCHEDULER_NONASSIGNED_TASK, intraTaskThreadIdx, threadsPerTask;
   uint32_t localThreadInTheBucket, localIdTaskInTheWarp, localIdTaskInTheBucket, startIdTaskPerWarp;
   //Scan in which bucket is matched this warp
-  while((bucketIdx != (GPU_WARP_SIZE + 1)) && (d_initWarpPerBucket[bucketIdx] <= globalWarpIdx)){
+  while((bucketIdx != (GPU_MAX_BUCKETS + 1)) && (d_initWarpPerBucket[bucketIdx] <= globalWarpIdx)){
     bucketIdx++;
   }
   bucketIdx--;
@@ -49,8 +52,11 @@ GPU_INLINE __device__ void gpu_scheduler_scatter_work(const uint32_t globalThrea
   // idTask recalculation
   idTask                    = d_initPosPerBucket[bucketIdx] + localIdTaskInTheBucket;
   // Disabling excess idTasks (tasks between warp buckets)
-  idTask					= (idTask < d_endPosPerBucket[bucketIdx]) ? idTask : GPU_SCHEDULER_DISABLED_TASK;
+  idTask		    = (idTask < d_endPosPerBucket[bucketIdx]) ? idTask : GPU_SCHEDULER_DISABLED_TASK;
   intraTaskThreadIdx        = (threadIdx.x % GPU_WARP_SIZE) % threadsPerTask;
+  // Update the buffer input/output for the thread re-scheduling
+  if(idTask <= d_endPosPerBucket[GPU_MAX_BUCKETS - 1])
+    idTask                  = (updateScheduling) ? d_reorderBuffer[idTask] : idTask;
   // Returning new task id and thread work configuration (internal thread ID inside a thread group + Number of threads assigned to a task)
   (* idTaskRes)             = idTask;
   (* intraTaskThreadIdxRes) = intraTaskThreadIdx;
