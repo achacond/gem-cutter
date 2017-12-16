@@ -93,6 +93,7 @@ uint32_t gpu_bpm_align_buffer_get_max_candidate_size_(const void* const bpmBuffe
 uint32_t gpu_bpm_align_buffer_get_max_queries_(const void* const bpmBuffer);
 uint32_t gpu_bpm_align_buffer_get_max_query_bases_(const void* const bpmBuffer);
 uint32_t gpu_bpm_align_buffer_get_max_candidate_bases_(const void* const bpmBuffer);
+uint32_t gpu_buffer_bpm_align_get_max_cigar_entries_(const void* const bpmBuffer);
 
 /*
  * Main functions

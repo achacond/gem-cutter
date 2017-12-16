@@ -257,8 +257,8 @@ __global__ void gpu_bpm_align_kernel(const gpu_bpm_align_qry_entry_t* const d_qu
   if ((idCandidate < numCigars) && (idCandidate != GPU_SCHEDULER_DISABLED_TASK)){
     // Update the buffer input/output for the thread re-scheduling
     gpu_bpm_align_local_kernel(d_queries, d_PEQs, d_queryInfo, d_candidateInfo,
-    		               d_referencePlain, d_referenceMasked, referenceSize,
-    		               d_cigars, d_cigarInfo,
+    		                   d_referencePlain, d_referenceMasked, referenceSize,
+    		                   d_cigars, d_cigarInfo,
                                idCandidate, intraQueryThreadIdx, threadsPerQuery);
   }
 }
