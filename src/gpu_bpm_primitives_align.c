@@ -205,8 +205,8 @@ void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t tota
 {
   // Buffer re-initialization
   gpu_buffer_t* const mBuff = (gpu_buffer_t *) bpmBuffer;
-  const uint32_t averageQuerySize       = (totalPEQEntries * GPU_BPM_ALIGN_PEQ_ENTRY_LENGTH) / totalQueries;
-  const uint32_t candidatesPerQuery     = totalCandidates / totalQueries;
+  const uint32_t averageQuerySize       = GPU_DIV_CEIL(totalQueryBases, totalQueries);
+  const uint32_t candidatesPerQuery     = GPU_DIV_CEIL(totalCandidates, totalQueries);
 
   // Re-map the buffer layout with new information trying to fit better
   gpu_bpm_align_init_buffer_(bpmBuffer, averageQuerySize, candidatesPerQuery);
@@ -288,13 +288,13 @@ gpu_error_t gpu_bpm_align_reorder_process(const gpu_bpm_align_queries_buffer_t* 
 
 gpu_error_t gpu_bpm_align_reordering_buffer(gpu_buffer_t *mBuff)
 {
-  const uint32_t                           		   binSize  = mBuff->data.abpm.queryBinSize;
-  const bool                               		   binning  = mBuff->data.abpm.queryBinning;
+  const uint32_t                           		 binSize  = mBuff->data.abpm.queryBinSize;
+  const bool                               		 binning  = mBuff->data.abpm.queryBinning;
   const gpu_bpm_align_queries_buffer_t* const    qry      = &mBuff->data.abpm.queries;
   const gpu_bpm_align_candidates_buffer_t* const cand     = &mBuff->data.abpm.candidates;
-  gpu_bpm_align_cigars_buffer_t* const 		 res      = &mBuff->data.abpm.cigars;
+  gpu_bpm_align_cigars_buffer_t* const           res      = &mBuff->data.abpm.cigars;
   gpu_scheduler_buffer_t* const                  rebuff   = &mBuff->data.abpm.reorderBuffer;
-  uint32_t                           			       idBucket;
+  uint32_t                           			 idBucket;
   //Re-initialize the reorderBuffer (to reuse the buffer)
   rebuff->numBuckets          = GPU_BPM_ALIGN_NUM_BUCKETS_FOR_BINNING;
   rebuff->elementsPerBuffer   = 0;
@@ -411,7 +411,7 @@ void gpu_bpm_align_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntr
   // Setting real output number of elements
   for(idCandidate = 0; idCandidate < numCandidates; idCandidate++){
 	const uint32_t idQuery = mBuff->data.abpm.candidates.h_candidatesInfo[idCandidate].idQuery;
-	mBuff->data.abpm.cigars.h_cigarsInfo[idCandidate].offsetCigarStart = numCigarEntries;
+	  mBuff->data.abpm.cigars.h_cigarsInfo[idCandidate].offsetCigarStart = numCigarEntries;
     numCigarEntries += mBuff->data.abpm.queries.h_qinfo[idQuery].size + 1;
   }
   mBuff->data.abpm.cigars.numCigarEntries = numCigarEntries;
