@@ -158,8 +158,8 @@ void gpu_bpm_filter_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t tot
   // Remap the buffer layout with new information trying to fit better
   gpu_bpm_filter_init_buffer_(bpmBuffer, averageQuerySize, candidatesPerQuery);
   // Checking if we need to reallocate a bigger buffer
-  if( (totalPEQEntries > gpu_bpm_filter_buffer_get_max_peq_entries_(bpmBuffer)) &&
-      (totalCandidates > gpu_bpm_filter_buffer_get_max_candidates_(bpmBuffer))  &&
+  if( (totalPEQEntries > gpu_bpm_filter_buffer_get_max_peq_entries_(bpmBuffer)) ||
+      (totalCandidates > gpu_bpm_filter_buffer_get_max_candidates_(bpmBuffer))  ||
       (totalQueries    > gpu_bpm_filter_buffer_get_max_queries_(bpmBuffer))){
     // Resize the GPU buffer to fit the required input
     const uint32_t  idSupDevice             = mBuff->idSupportedDevice;

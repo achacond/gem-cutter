@@ -173,7 +173,7 @@ void gpu_bpm_align_reallocate_device_buffer_layout(gpu_buffer_t* mBuff)
 void gpu_bpm_align_init_buffer_(void* const bpmBuffer, const uint32_t averageQuerySize, const uint32_t candidatesPerQuery)
 {
   gpu_buffer_t* const mBuff                   = (gpu_buffer_t *) bpmBuffer;
-  const double        sizeBuff                = mBuff->sizeBuffer * 0.90;
+  const double        sizeBuff                = mBuff->sizeBuffer * 0.95;
   const uint32_t      averageNumPEQEntries    = GPU_DIV_CEIL(averageQuerySize, GPU_BPM_ALIGN_PEQ_ENTRY_LENGTH);
   const uint32_t      averageCigarSize        = averageQuerySize + 1;
   const uint32_t      numInputs               = (uint32_t)(sizeBuff / gpu_bpm_align_size_per_candidate(averageQuerySize, candidatesPerQuery));
@@ -211,13 +211,13 @@ void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t tota
   // Re-map the buffer layout with new information trying to fit better
   gpu_bpm_align_init_buffer_(bpmBuffer, averageQuerySize, candidatesPerQuery);
   // Checking if we need to reallocate a bigger buffer
-  if( (totalPEQEntries     > gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer))     &&
-      (totalQueryBases     > gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer))     &&
-      (totalCandidates     > gpu_bpm_align_buffer_get_max_candidates_(bpmBuffer))      &&
+  if( (totalPEQEntries     > gpu_bpm_align_buffer_get_max_peq_entries_(bpmBuffer))     ||
+      (totalQueryBases     > gpu_bpm_align_buffer_get_max_query_bases_(bpmBuffer))     ||
+      (totalCandidates     > gpu_bpm_align_buffer_get_max_candidates_(bpmBuffer))      ||
       (totalQueries        > gpu_bpm_align_buffer_get_max_queries_(bpmBuffer))){
     // Resize the GPU buffer to fit the required input
     const uint32_t  idSupDevice             = mBuff->idSupportedDevice;
-    const float     resizeFactor            = 5.0;
+    const float     resizeFactor            = 2.0;
     const size_t    bytesPerBPMBuffer       = totalCandidates * gpu_bpm_align_size_per_candidate(averageQuerySize, candidatesPerQuery);
     //Recalculate the minimum buffer size
     mBuff->sizeBuffer = bytesPerBPMBuffer * resizeFactor;

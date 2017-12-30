@@ -187,8 +187,8 @@ void gpu_fmi_asearch_init_and_realloc_buffer_(void* const fmiBuffer, const uint3
   // Remap the buffer layout with new information trying to fit better
   gpu_fmi_asearch_init_buffer_(fmiBuffer, averageQuerySize, maxRegionsFactor);
   // Checking if we need to reallocate a bigger buffer
-  if( (totalBases   > gpu_fmi_asearch_buffer_get_max_bases_(fmiBuffer))   &&
-      (totalQueries > gpu_fmi_asearch_buffer_get_max_queries_(fmiBuffer)) &&
+  if( (totalBases   > gpu_fmi_asearch_buffer_get_max_bases_(fmiBuffer))   ||
+      (totalQueries > gpu_fmi_asearch_buffer_get_max_queries_(fmiBuffer)) ||
       (totalRegions > gpu_fmi_asearch_buffer_get_max_regions_(fmiBuffer))){
     // Resize the GPU buffer to fit the required input
     const uint32_t      idSupDevice             = mBuff->idSupportedDevice;

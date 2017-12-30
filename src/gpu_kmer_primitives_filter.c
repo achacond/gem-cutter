@@ -122,8 +122,8 @@ void gpu_kmer_filter_init_and_realloc_buffer_(void *kmerBuffer, const uint32_t t
   // Re-map the buffer layout with new information trying to fit better
   gpu_kmer_filter_init_buffer_(kmerBuffer, averageQuerySize, candidatesPerQuery);
   // Checking if we need to reallocate a bigger buffer
-  if( (totalBases      > gpu_kmer_filter_buffer_get_max_qry_bases_(kmerBuffer))   &&
-      (totalCandidates > gpu_kmer_filter_buffer_get_max_candidates_(kmerBuffer))  &&
+  if( (totalBases      > gpu_kmer_filter_buffer_get_max_qry_bases_(kmerBuffer))   ||
+      (totalCandidates > gpu_kmer_filter_buffer_get_max_candidates_(kmerBuffer))  ||
       (totalQueries    > gpu_kmer_filter_buffer_get_max_queries_(kmerBuffer))){
     // Resize the GPU buffer to fit the required input
     const uint32_t  idSupDevice             = mBuff->idSupportedDevice;
