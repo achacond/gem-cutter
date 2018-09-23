@@ -40,11 +40,15 @@ Developers:
 Alejandro Chacon, <alejandro.chacond@gmail.com> (Main Developer)
 
 Special Contributors:
+
 Santiago Marco-Sola, <santiagomsola@gmail.com>
+
 Oriol Mula Valls, <oriol.mula@gmail.com>
 
 Special Thanks:
+
 Nvidia: Nuno Subtil, Jacopo Pantaleoni, Mark Berguer, Jonathan Cohen
+
 Thanks to all the friends supporting this project.
 
 ## 5. REPORTING BUGS
