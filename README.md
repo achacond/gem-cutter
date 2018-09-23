@@ -37,19 +37,15 @@ The basic building blocks currently included are described in the next list:
 ## 4. CONTRIBUTORS
 
 Developers: 
-Alejandro Chacon, <alejandro.chacond@gmail.com> (Main Developer)
+* Alejandro Chacon, <alejandro.chacond@gmail.com> (Main Developer)
 
 Special Contributors:
-
-Santiago Marco-Sola, <santiagomsola@gmail.com>
-
-Oriol Mula Valls, <oriol.mula@gmail.com>
+* Santiago Marco-Sola, <santiagomsola@gmail.com>
+* Oriol Mula Valls, <oriol.mula@gmail.com>
 
 Special Thanks:
-
-Nvidia: Nuno Subtil, Jacopo Pantaleoni, Mark Berguer, Jonathan Cohen
-
-Thanks to all the friends supporting this project.
+* Nvidia: Nuno Subtil, Jacopo Pantaleoni, Mark Berguer, Jonathan Cohen
+* Thanks to all the friends supporting this project.
 
 ## 5. REPORTING BUGS
 
