@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *                2013-2016 by Santiago Marco-Sola <santiagomsola@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.

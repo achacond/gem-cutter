@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -102,6 +102,7 @@ void gpu_fmi_decode_init_and_realloc_buffer_(void* const fmiBuffer, const uint32
   const float         resizeFactor            = 2.0;
   const size_t        bytesPerDecodeBuffer    = numDecodes * gpu_fmi_decode_input_size();
 
+  //printf("RESIZE[FMI_DECODE] %d %d \n",  mBuff->sizeBuffer, bytesPerDecodeBuffer * resizeFactor);
   //Recalculate the minimum buffer size
   mBuff->sizeBuffer = bytesPerDecodeBuffer * resizeFactor;
 

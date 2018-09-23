@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *                2013-2016 by Santiago Marco-Sola <santiagomsola@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
@@ -50,7 +50,7 @@ typedef enum
   GPU_INDEX             = GPU_FMI | GPU_SA,
   GPU_REFERENCE_MASKED	= GPU_BPM_ALIGN,
   GPU_REFERENCE_PLAIN   = GPU_BPM_FILTER | GPU_KMER_FILTER,
-  GPU_REFERENCE			    = GPU_REFERENCE_PLAIN | GPU_REFERENCE_MASKED,
+  GPU_REFERENCE         = GPU_REFERENCE_PLAIN | GPU_REFERENCE_MASKED,
   /* GPU stages          */
   GPU_SEEDING           = GPU_INDEX,
   GPU_FILTERING         = GPU_REFERENCE_PLAIN,
@@ -73,14 +73,17 @@ typedef enum
   GPU_ARCH_MAXWELL_2G = GPU_UINT32_ONE_MASK << 6,
   GPU_ARCH_PASCAL_1G  = GPU_UINT32_ONE_MASK << 7,
   GPU_ARCH_PASCAL_2G  = GPU_UINT32_ONE_MASK << 8,
+  GPU_ARCH_VOLTA_1G   = GPU_UINT32_ONE_MASK << 9,
+  GPU_ARCH_VOLTA_2G   = GPU_UINT32_ONE_MASK << 10,
   /* Main GPU Architectures          */
   GPU_ARCH_FERMI      = GPU_ARCH_FERMI_1G   | GPU_ARCH_FERMI_2G,
   GPU_ARCH_KEPLER     = GPU_ARCH_KEPLER_1G  | GPU_ARCH_KEPLER_2G,
   GPU_ARCH_MAXWELL    = GPU_ARCH_MAXWELL_1G | GPU_ARCH_MAXWELL_2G,
   GPU_ARCH_PASCAL     = GPU_ARCH_PASCAL_1G  | GPU_ARCH_PASCAL_2G,
+  GPU_ARCH_VOLTA      = GPU_ARCH_VOLTA_1G   | GPU_ARCH_VOLTA_2G,
   /* General setups                  */
   GPU_ARCH_NEWGEN     = GPU_UINT32_ONE_MASK << 31,
-  GPU_ARCH_SUPPORTED  = GPU_ARCH_FERMI | GPU_ARCH_KEPLER | GPU_ARCH_MAXWELL | GPU_ARCH_PASCAL | GPU_ARCH_NEWGEN
+  GPU_ARCH_SUPPORTED  = GPU_ARCH_FERMI | GPU_ARCH_KEPLER | GPU_ARCH_MAXWELL | GPU_ARCH_PASCAL | GPU_ARCH_VOLTA | GPU_ARCH_NEWGEN
 } gpu_dev_arch_t;
 
 typedef struct {

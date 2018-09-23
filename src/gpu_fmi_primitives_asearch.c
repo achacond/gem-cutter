@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -160,7 +160,7 @@ void gpu_fmi_asearch_reallocate_device_buffer_layout(gpu_buffer_t* mBuff)
 void gpu_fmi_asearch_init_buffer_(void* const fmiBuffer, const uint32_t averageQuerySize, const uint32_t maxRegionsFactor)
 {
   gpu_buffer_t* const mBuff                  = (gpu_buffer_t *) fmiBuffer;
-  const size_t        sizeBuff               = mBuff->sizeBuffer * 0.95;
+  const size_t        sizeBuff               = mBuff->sizeBuffer * 0.90;
   const uint32_t      averageRegionsPerQuery = GPU_MAX(GPU_DIV_CEIL(averageQuerySize, maxRegionsFactor), GPU_FMI_MIN_REGIONS);
   const size_t        bytesPerQuery          = gpu_fmi_asearch_size_per_query(averageQuerySize, averageRegionsPerQuery);
   const uint32_t      numQueries             = sizeBuff / bytesPerQuery;
@@ -195,6 +195,7 @@ void gpu_fmi_asearch_init_and_realloc_buffer_(void* const fmiBuffer, const uint3
     const float         resizeFactor            = 2.0;
     const size_t        bytesPerSearchBuffer    = totalQueries * gpu_fmi_asearch_size_per_query(averageQuerySize, averageRegionsPerQuery);
     //Recalculate the minimum buffer size
+    //printf("RESIZE[FMI_SEARCH] %d %d \n",  mBuff->sizeBuffer, bytesPerSearchBuffer * resizeFactor);
     mBuff->sizeBuffer = bytesPerSearchBuffer * resizeFactor;
     //FREE HOST AND DEVICE BUFFER
     GPU_ERROR(gpu_buffer_free(mBuff));

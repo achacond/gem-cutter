@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -17,39 +17,39 @@ extern "C" {
 }
 #include "gpu_resources.h"
 
-__device__ const gpu_char4_t GPU_CIGAR_INIT = {0, 0, GPU_CIGAR_NULL, 0};
+__device__ const gpu_char4_t GPU_CIGAR_INIT = {(char)0, (char)0, GPU_CIGAR_NULL, (char)0};
                                                                                  //(x,y) Matrix DP movement; CIGAR op; Match efficiency;
-__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_NULL      = { 0, 0, GPU_CIGAR_NULL,      0};
-__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_MATCH     = {-1,-1, GPU_CIGAR_MATCH,     0};
-__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_MISSMATCH = {-1,-1, GPU_CIGAR_MISSMATCH, 0};
-__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_INSERTION = {-1, 0, GPU_CIGAR_INSERTION, 1};
-__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_DELETION  = { 0,-1, GPU_CIGAR_DELETION, -1};
+__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_NULL      = {(char) 0, (char) 0, GPU_CIGAR_NULL,      (char) 0};
+__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_MATCH     = {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0};
+__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_MISSMATCH = {(char)-1, (char)-1, GPU_CIGAR_MISSMATCH, (char) 0};
+__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_INSERTION = {(char)-1, (char) 0, GPU_CIGAR_INSERTION, (char) 1};
+__device__ const gpu_bpm_align_device_cigar_entry_t GPU_CIGAR_DEVICE_DELETION  = {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1};
 
                                                                                    //List of cigar events
-__device__ const gpu_bpm_align_device_cigar_entry_t gpu_bmp_align_cigar_events[] = {{ 0, 0, GPU_CIGAR_NULL,      0},
-                                                                                    {-1,-1, GPU_CIGAR_MATCH,     0},
-                                                                                    {-1,-1, GPU_CIGAR_MISSMATCH, 0},
-                                                                                    {-1, 0, GPU_CIGAR_INSERTION, 1},
-                                                                                    { 0,-1, GPU_CIGAR_DELETION, -1}};
+__device__ const gpu_bpm_align_device_cigar_entry_t gpu_bmp_align_cigar_events[] = {{(char) 0, (char) 0, GPU_CIGAR_NULL,      (char) 0},
+                                                                                    {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0},
+                                                                                    {(char)-1, (char)-1, GPU_CIGAR_MISSMATCH, (char) 0},
+                                                                                    {(char)-1, (char) 0, GPU_CIGAR_INSERTION, (char) 1},
+                                                                                    {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1}};
 
 __device__ const gpu_bpm_align_device_cigar_entry_t gpu_bmp_align_cigar_lut[16] = {//Left Cigar Alignment
-                                                                                   {-1,-1, GPU_CIGAR_MISSMATCH, 0},
-                                                                                   {-1,-1, GPU_CIGAR_MATCH,     0},
-                                                                                   {-1, 0, GPU_CIGAR_INSERTION, 1},
-                                                                                   {-1,-1, GPU_CIGAR_MATCH,     0},
-                                                                                   { 0,-1, GPU_CIGAR_DELETION, -1},
-                                                                                   {-1,-1, GPU_CIGAR_MATCH,     0},
-                                                                                   { 0,-1, GPU_CIGAR_DELETION, -1},
-                                                                                   {-1,-1, GPU_CIGAR_MATCH,     0},
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MISSMATCH, (char) 0},
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0},
+                                                                                   {(char)-1, (char) 0, GPU_CIGAR_INSERTION, (char) 1},
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0},
+                                                                                   {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1},
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0},
+                                                                                   {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1},
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0},
                                                                                    //Right Cigar Alignment
-                                                                                   {-1,-1, GPU_CIGAR_MISSMATCH, 0},
-                                                                                   {-1,-1, GPU_CIGAR_MATCH,     0},
-                                                                                   {-1, 0, GPU_CIGAR_INSERTION, 1},
-                                                                                   {-1, 0, GPU_CIGAR_INSERTION, 1},
-                                                                                   { 0,-1, GPU_CIGAR_DELETION, -1},
-                                                                                   { 0,-1, GPU_CIGAR_DELETION, -1},
-                                                                                   { 0,-1, GPU_CIGAR_DELETION, -1},
-                                                                                   { 0,-1, GPU_CIGAR_DELETION, -1}};
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MISSMATCH, (char) 0},
+                                                                                   {(char)-1, (char)-1, GPU_CIGAR_MATCH,     (char) 0},
+                                                                                   {(char)-1, (char) 0, GPU_CIGAR_INSERTION, (char) 1},
+                                                                                   {(char)-1, (char) 0, GPU_CIGAR_INSERTION, (char) 1},
+                                                                                   {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1},
+                                                                                   {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1},
+                                                                                   {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1},
+                                                                                   {(char) 0, (char)-1, GPU_CIGAR_DELETION,  (char)-1}};
 
 GPU_INLINE __device__ void cooperative_shift(uint32_t *value, const uint32_t shiftedBits,
                                              const uint32_t localThreadIdx, const uint32_t BMPS_PER_THREAD)
@@ -80,7 +80,7 @@ GPU_INLINE __device__ void cooperative_sum(const uint32_t *A, const uint32_t *B,
   }
   UADD__IN_CARRY(carry, 0, 0);
 
-  while(__any(carry)){
+  while(any_32(carry)){
     carry = shfl_32(carry, laneIdx - 1);
     carry = (localThreadIdx) ? carry : 0;
     UADD__CARRY_OUT(C[0], C[0], carry);

@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -23,8 +23,8 @@ Internal Objects
 *****************************/
 
 typedef struct {
-  uint32_t             numBases;
-  uint32_t             numQueries;
+  uint32_t                     numBases;
+  uint32_t                     numQueries;
   gpu_kmer_filter_qry_entry_t *d_queries;
   gpu_kmer_filter_qry_entry_t *h_queries;
   gpu_kmer_filter_qry_info_t  *d_queryInfo;
@@ -32,13 +32,13 @@ typedef struct {
 } gpu_kmer_filter_queries_buffer_t;
 
 typedef struct {
-  uint32_t             numAlignments;
+  uint32_t                     numAlignments;
   gpu_kmer_filter_alg_entry_t *h_alignments;
   gpu_kmer_filter_alg_entry_t *d_alignments;
 } gpu_kmer_filter_alignments_buffer_t;
 
 typedef struct {
-  uint32_t             numCandidates;
+  uint32_t                     numCandidates;
   gpu_kmer_filter_cand_info_t *h_candidates;
   gpu_kmer_filter_cand_info_t *d_candidates;
 } gpu_kmer_filter_candidates_buffer_t;
@@ -49,11 +49,11 @@ General Object
 *****************************/
 
 typedef struct {
-  uint32_t                     maxBases;
-  uint32_t                     maxCandidates;
-  uint32_t                     maxQueries;
-  uint32_t                     maxAlignments;
-  uint32_t                     maxError;
+  uint32_t                            maxBases;
+  uint32_t                            maxCandidates;
+  uint32_t                            maxQueries;
+  uint32_t                            maxAlignments;
+  uint32_t                            maxError;
   gpu_kmer_filter_queries_buffer_t    queries;
   gpu_kmer_filter_candidates_buffer_t candidates;
   gpu_kmer_filter_alignments_buffer_t alignments;

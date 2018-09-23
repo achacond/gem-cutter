@@ -1,7 +1,7 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
- *                2013-2016 by Santiago Marco-Sola <santiagomsola@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *                2013-2018 by Santiago Marco-Sola <santiagomsola@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -56,7 +56,12 @@ typedef struct {
 
 typedef struct {
   uint32_t posEntry;
-  uint32_t size;
+  uint32_t idChain;
+  uint32_t chainSize;
+  uint32_t chainMaxError;
+  uint32_t idTile;
+  uint32_t tileSize;
+  uint32_t tileMaxError;
 } gpu_bpm_filter_qry_info_t;
 
 typedef struct {
@@ -118,7 +123,7 @@ uint32_t gpu_kmer_filter_buffer_get_max_queries_(const void* const kmerBuffer);
  */
 /* BPM filter buffer primitives */
 void gpu_bpm_filter_init_buffer_(void* const bpmBuffer, const uint32_t averageQuerySize, const uint32_t candidatesPerQuery);
-void gpu_bpm_filter_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntries, const uint32_t numQueries, const uint32_t numCandidates, const uint32_t queryBinSize);
+void gpu_bpm_filter_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntries, const uint32_t numQueries, const uint32_t numCandidates, const uint32_t maxQuerySize, const uint32_t queryBinSize);
 void gpu_bpm_filter_receive_buffer_(void* const bpmBuffer);
 void gpu_bpm_filter_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t totalPEQEntries, const uint32_t totalCandidates, const uint32_t totalQueries);
 /* K-MER filter buffer primitives */

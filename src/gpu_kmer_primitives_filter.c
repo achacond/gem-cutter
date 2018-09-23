@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -129,6 +129,7 @@ void gpu_kmer_filter_init_and_realloc_buffer_(void *kmerBuffer, const uint32_t t
     const uint32_t  idSupDevice             = mBuff->idSupportedDevice;
     const float     resizeFactor            = 2.0;
     const size_t    bytesPerKmerBuffer      = totalCandidates * gpu_kmer_filter_size_per_candidate(averageQuerySize, candidatesPerQuery);
+    //printf("RESIZE[KMER_FILTER] %d %d \n",  mBuff->sizeBuffer, bytesPerKmerBuffer * resizeFactor);
     //Recalculate the minimum buffer size
     mBuff->sizeBuffer = bytesPerKmerBuffer * resizeFactor;
     //FREE HOST AND DEVICE BUFFER

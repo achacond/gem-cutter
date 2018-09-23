@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -21,6 +21,8 @@ uint32_t gpu_device_get_threads_per_block(const gpu_dev_arch_t architecture)
   if(architecture & GPU_ARCH_FERMI)   return(GPU_THREADS_PER_BLOCK_FERMI);
   if(architecture & GPU_ARCH_KEPLER)  return(GPU_THREADS_PER_BLOCK_KEPLER);
   if(architecture & GPU_ARCH_MAXWELL) return(GPU_THREADS_PER_BLOCK_MAXWELL);
+  if(architecture & GPU_ARCH_PASCAL)  return(GPU_THREADS_PER_BLOCK_PASCAL);
+  if(architecture & GPU_ARCH_VOLTA)   return(GPU_THREADS_PER_BLOCK_VOLTA);
   return(GPU_THREADS_PER_BLOCK_NEWGEN);
 }
 
@@ -35,9 +37,11 @@ gpu_dev_arch_t gpu_device_get_architecture(const uint32_t idDevice)
   if (devProp.major == 3 && devProp.minor <  5) return(GPU_ARCH_KEPLER_1G);   /* CC 3.0, 3.2       */
   if (devProp.major == 3 && devProp.minor >= 5) return(GPU_ARCH_KEPLER_2G);   /* CC 3.5            */
   if (devProp.major == 5 && devProp.minor == 0) return(GPU_ARCH_MAXWELL_1G);  /* CC 5.0            */
-  if (devProp.major == 5 && devProp.minor >= 5) return(GPU_ARCH_MAXWELL_2G);  /* CC 5.2            */
+  if (devProp.major == 5 && devProp.minor >= 2) return(GPU_ARCH_MAXWELL_2G);  /* CC 5.2            */
   if (devProp.major == 6 && devProp.minor == 0) return(GPU_ARCH_PASCAL_1G);   /* CC 6.0            */
-  if (devProp.major == 6 && devProp.minor >= 5) return(GPU_ARCH_PASCAL_2G);   /* CC 6.2            */
+  if (devProp.major == 6 && devProp.minor >= 2) return(GPU_ARCH_PASCAL_2G);   /* CC 6.2            */
+  if (devProp.major == 7 && devProp.minor == 0) return(GPU_ARCH_VOLTA_1G);    /* CC 7.0            */
+  if (devProp.major == 7 && devProp.minor >= 1) return(GPU_ARCH_VOLTA_2G);    /* CC 7.1            */
   return(GPU_ARCH_NEWGEN);                                                    /* CC Y.X            */
 }
 
@@ -51,9 +55,11 @@ uint32_t gpu_device_get_SM_cuda_cores(const gpu_dev_arch_t architecture)
     case GPU_ARCH_KEPLER_2G:  return(192);
     case GPU_ARCH_MAXWELL_1G: return(128);
     case GPU_ARCH_MAXWELL_2G: return(128);
-    case GPU_ARCH_PASCAL_1G:  return(128);
+    case GPU_ARCH_PASCAL_1G:  return(64);
     case GPU_ARCH_PASCAL_2G:  return(128);
-    default:                  return(128);
+    case GPU_ARCH_VOLTA_1G:   return(64);
+    case GPU_ARCH_VOLTA_2G:   return(64);
+    default:                  return(64);
   }
 }
 
@@ -150,6 +156,16 @@ gpu_error_t gpu_device_reset_all(gpu_device_info_t **devices)
     CUDA_ERROR(cudaDeviceReset());
   }
   return(SUCCESS);
+}
+
+gpu_error_t gpu_device_synchronize(gpu_device_info_t **devices, uint32_t idSupDevice, cudaStream_t idStream)
+{
+  //Select the device of the Multi-GPU platform
+  CUDA_ERROR(cudaSetDevice(devices[idSupDevice]->idDevice));
+  //Synchronize Stream (the thread wait for the commands done in the stream)
+  CUDA_ERROR(cudaStreamSynchronize(idStream));
+  // Succeed
+  return (SUCCESS);
 }
 
 gpu_error_t gpu_device_synchronize_all(gpu_device_info_t **devices)

@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -26,6 +26,7 @@ GPU Interface Objects
 #define GPU_THREADS_PER_BLOCK_KEPLER  128
 #define GPU_THREADS_PER_BLOCK_MAXWELL 64
 #define GPU_THREADS_PER_BLOCK_PASCAL  64
+#define GPU_THREADS_PER_BLOCK_VOLTA   64
 #define GPU_THREADS_PER_BLOCK_NEWGEN  64
 
 typedef enum
@@ -110,6 +111,7 @@ gpu_error_t     gpu_device_free_info_all(gpu_device_info_t **devices);
 
 /* Collective device functions */
 gpu_error_t     gpu_device_reset_all(gpu_device_info_t **devices);
+gpu_error_t     gpu_device_synchronize(gpu_device_info_t **devices, uint32_t idSupDevice, cudaStream_t idStream);
 gpu_error_t     gpu_device_synchronize_all(gpu_device_info_t **devices);
 
 #endif /* GPU_DEVICES_H_ */

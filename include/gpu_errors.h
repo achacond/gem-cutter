@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -30,6 +30,7 @@ typedef enum
   E_NOT_SUPPORTED_ALLOC_POLICY,
   E_OVERFLOWING_BUFFER,
   E_FMI_TABLE_INCOMPATIBLE_SIZE,
+  E_USE_CASE_NOT_ALLOWED,
   E_NOT_IMPLEMENTED
 } gpu_error_t;
 

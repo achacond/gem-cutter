@@ -1,7 +1,7 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
- *                2013-2016 by Santiago Marco-Sola <santiagomsola@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *                2013-2018 by Santiago Marco-Sola <santiagomsola@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -24,12 +24,15 @@
  */
 
 /* BPM align data structures */
+#define GPU_CIGAR_ZERO        ((char)  0)
+#define GPU_CIGAR_POSITIVE    ((char)  1)
+#define GPU_CIGAR_NEGATIVE    ((char) -1)
 
-#define GPU_CIGAR_NULL        0
-#define GPU_CIGAR_MATCH       1
-#define GPU_CIGAR_MISSMATCH   2
-#define GPU_CIGAR_INSERTION   3
-#define GPU_CIGAR_DELETION    4
+#define GPU_CIGAR_NULL        ((char) 0)
+#define GPU_CIGAR_MATCH       ((char) 1)
+#define GPU_CIGAR_MISSMATCH   ((char) 2)
+#define GPU_CIGAR_INSERTION   ((char) 3)
+#define GPU_CIGAR_DELETION    ((char) 4)
 
 typedef char  gpu_bpm_align_cigar_event_t;
 typedef char  gpu_bpm_align_qry_entry_t;
@@ -67,9 +70,9 @@ typedef struct {
   // Return Cigar results
   gpu_bpm_align_coord_t       initCood;
   gpu_bpm_align_coord_t       endCood;
-  uint32_t 				            matchEffLenght;
-  uint32_t 				            cigarStartPos;
-  uint32_t				            cigarLenght;
+  uint32_t                    matchEffLenght;
+  uint32_t                    cigarStartPos;
+  uint32_t                    cigarLenght;
 } gpu_bpm_align_cigar_info_t;
 
 /*

@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -78,7 +78,7 @@ GPU_INLINE __device__ void gpu_bpm_align_backtrace(const uint32_t* const dpPV, c
   }
   // Master thread saves the last part of the cigar
   if (intraQueryThreadIdx  == masterThreadIdx){
-    const gpu_bpm_align_coord_t initCood =  {x + 1, y + 1};
+    const gpu_bpm_align_coord_t initCood =  {(uint32_t)(x + 1), (uint32_t)(y + 1)};
     // Saving the last CIGAR status event
     dpCIGAR[sizeQuery - cigarLenght].event       = event;
     dpCIGAR[sizeQuery - cigarLenght].occurrences = accNum;
@@ -109,7 +109,6 @@ GPU_INLINE __device__ void gpu_bpm_align_dp_matrix(uint4* const dpPV, uint4* con
   const uint32_t laneIdx   = gpu_get_lane_idx();
   const int32_t  indexWord = ((sizeQuery - 1) % BMPS_SIZE) / GPU_UINT32_LENGTH;
   const uint32_t mask      = ((sizeQuery % GPU_UINT32_LENGTH) == 0) ? GPU_UINT32_MASK_ONE_HIGH : 1 << ((sizeQuery % GPU_UINT32_LENGTH) - 1);
-
 
   ulong2   infoCandidatePlain  = GPU_TEXT_INIT, infoCandidateMasked = GPU_TEXT_INIT;
   int32_t  score = sizeQuery, minScore = sizeQuery;
@@ -290,7 +289,7 @@ gpu_error_t gpu_bpm_align_process_buffer(gpu_buffer_t *mBuff)
   // Cigar results information
   const uint32_t                                  numCigars         = cigar->numCigars;
   gpu_bpm_align_cigar_info_t*                     cigarsInfo        = cigar->d_cigarsInfo;
-
+  // Thread work distribution
   dim3 blocksPerGrid, threadsPerBlock;
   const uint32_t numThreads = rebuff->numWarps * GPU_WARP_SIZE;
   gpu_device_kernel_thread_configuration(device, numThreads, &blocksPerGrid, &threadsPerBlock);
@@ -300,7 +299,7 @@ gpu_error_t gpu_bpm_align_process_buffer(gpu_buffer_t *mBuff)
     return(E_OVERFLOWING_BUFFER);
   // Launching the BPM align kernel on device
   gpu_bpm_align_kernel<<<blocksPerGrid, threadsPerBlock, 0, idStream>>>(qry->d_queries, (gpu_bpm_align_device_qry_entry_t *) qry->d_peq, qry->d_qinfo,
-                                                                        cand->d_candidatesInfo, rebuff->d_reorderBuffer,
+                                                                        cand->d_candidatesInfo, rebuff->threadMapScheduler.d_reorderBuffer,
                                                                         ref->d_reference_plain[idSupDev], ref->d_reference_masked[idSupDev], ref->size,
                                                                         cigar->d_cigars, cigarsInfo, numCigars,
                                                                         rebuff->d_initPosPerBucket, rebuff->d_initWarpPerBucket, rebuff->d_endPosPerBucket,

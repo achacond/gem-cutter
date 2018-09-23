@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -38,7 +38,8 @@ const char* gpuGetErrorString(gpu_error_t error)
     case E_NOT_IMPLEMENTED:             return "GEM GPU - Error: functionality not implemented";
     case E_DATA_NOT_ALLOCATED:          return "GEM GPU - Error: structure not allocated to any memory";
     case E_OVERFLOWING_BUFFER:          return "GEM GPU - Error: overflowing elements per buffer";
-    case E_FMI_TABLE_INCOMPATIBLE_SIZE: return "GEM GPU - Error: fmi table num levels incompatible";
+    case E_FMI_TABLE_INCOMPATIBLE_SIZE: return "GEM GPU - Error: fmi table number of levels incompatible";
+    case E_USE_CASE_NOT_ALLOWED:        return "GEM GPU - Error: use case not considered or allowed";
     default:                            return "GEM GPU - Unknown error";
   }
 }

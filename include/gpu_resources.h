@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -15,6 +15,8 @@ extern "C" {
 #include "gpu_devices.h"
 }
 
+#define GPU_NVCC_COLLECTIVES_REQ_SYNC 9000
+
 #define GPU_CC_FERMI_1G   200
 #define GPU_CC_FERMI_2G   210
 #define GPU_CC_KEPLER_1G  300
@@ -24,6 +26,8 @@ extern "C" {
 #define GPU_CC_MAXWELL_2G 520
 #define GPU_CC_PASCAL_1G  610
 #define GPU_CC_PASCAL_2G  600
+#define GPU_CC_VOLTA_1G   720
+#define GPU_CC_VOLTA_2G   700
 
 /* Defines related to GPU Architecture */
 #if   (__CUDA_ARCH__ <= GPU_CC_FERMI_2G)
@@ -32,11 +36,16 @@ extern "C" {
   #define GPU_THREADS_PER_BLOCK   GPU_THREADS_PER_BLOCK_KEPLER
 #elif (__CUDA_ARCH__ <= GPU_CC_MAXWELL_2G)
   #define GPU_THREADS_PER_BLOCK   GPU_THREADS_PER_BLOCK_MAXWELL
-#elif (__CUDA_ARCH__ <= GPU_CC_PASCAL_1G)
-  #define GPU_THREADS_PER_BLOCK   GPU_THREADS_PER_BLOCK_MAXWELL
+#elif (__CUDA_ARCH__ <= GPU_CC_PASCAL_2G)
+  #define GPU_THREADS_PER_BLOCK   GPU_THREADS_PER_BLOCK_PASCAL
+#elif (__CUDA_ARCH__ <= GPU_CC_VOLTA_2G)
+  #define GPU_THREADS_PER_BLOCK   GPU_THREADS_PER_BLOCK_VOLTA
 #else
   #define GPU_THREADS_PER_BLOCK   GPU_THREADS_PER_BLOCK_NEWGEN
 #endif
+
+// Setting threads in the warp that participate in a collective operation
+#define GPU_COOPERATIVE_THREADS_ALL   0xFFFFFFFFu
 
 /*************************************
 GPU Side conversion types
@@ -93,12 +102,39 @@ GPU_INLINE __device__ uint32_t __emulated_shfl(const int scalarValue, const uint
 }
 #endif
 
+GPU_INLINE __device__ uint32_t ballot_32(const uint32_t threadCondition)
+{
+  #if (CUDART_VERSION < GPU_NVCC_COLLECTIVES_REQ_SYNC)
+    //#warning ("Cooperative operations: Using native __ballot")
+    return (__ballot(threadCondition));
+  #else
+    //#warning ("Cooperative operations: Using native sync __ballot")
+    return (__ballot_sync(GPU_COOPERATIVE_THREADS_ALL, threadCondition));
+  #endif
+}
+
+GPU_INLINE __device__ uint32_t any_32(const uint32_t threadCondition)
+{
+  #if (CUDART_VERSION < GPU_NVCC_COLLECTIVES_REQ_SYNC)
+    //#warning ("Cooperative operations: Using native __any")
+    return (__any(threadCondition));
+  #else
+    //#warning ("Cooperative operations: Using native sync __any")
+    return (__any_sync(GPU_COOPERATIVE_THREADS_ALL, threadCondition));
+  #endif
+}
+
 GPU_INLINE __device__ uint32_t shfl_32(uint32_t scalarValue, const int lane)
 {
   #if (__CUDA_ARCH__ < GPU_CC_KEPLER_1G)
+    //#warning ("Cooperative operations: Using emulated __shuffle")
     return (__emulated_shfl(scalarValue, (uint32_t)lane));
-  #else
+  #elif (CUDART_VERSION < GPU_NVCC_COLLECTIVES_REQ_SYNC)
+    //#warning ("Cooperative operations: Using native __shuffle")
     return (__shfl((int)scalarValue, (int)lane, GPU_WARP_SIZE));
+  #else
+    //#warning ("Cooperative operations: Using native sync __shuffle")
+    return (__shfl_sync(GPU_COOPERATIVE_THREADS_ALL, (int)scalarValue, (int)lane, GPU_WARP_SIZE));
   #endif
 }
 

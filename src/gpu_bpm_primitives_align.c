@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -125,8 +125,8 @@ void gpu_bpm_align_reallocate_host_buffer_layout(gpu_buffer_t* mBuff)
   mBuff->data.abpm.candidates.h_candidatesInfo = GPU_ALIGN_TO(rawAlloc,16);
   rawAlloc = (void *) (mBuff->data.abpm.candidates.h_candidatesInfo + mBuff->data.abpm.maxCandidates);
   //Allocate space for the reorder buffer structures
-  mBuff->data.abpm.reorderBuffer.h_reorderBuffer = GPU_ALIGN_TO(rawAlloc,16);
-  rawAlloc = (void *) (mBuff->data.abpm.reorderBuffer.h_reorderBuffer + mBuff->data.abpm.maxReorderBuffer);
+  mBuff->data.abpm.reorderBuffer.threadMapScheduler.h_reorderBuffer = GPU_ALIGN_TO(rawAlloc,16);
+  rawAlloc = (void *) (mBuff->data.abpm.reorderBuffer.threadMapScheduler.h_reorderBuffer + mBuff->data.abpm.maxReorderBuffer);
   mBuff->data.abpm.reorderBuffer.h_initPosPerBucket = GPU_ALIGN_TO(rawAlloc,16);
   rawAlloc = (void *) (mBuff->data.abpm.reorderBuffer.h_initPosPerBucket + mBuff->data.abpm.maxBuckets);
   mBuff->data.abpm.reorderBuffer.h_initWarpPerBucket = GPU_ALIGN_TO(rawAlloc,16);
@@ -154,8 +154,8 @@ void gpu_bpm_align_reallocate_device_buffer_layout(gpu_buffer_t* mBuff)
   mBuff->data.abpm.candidates.d_candidatesInfo = GPU_ALIGN_TO(rawAlloc,16);
   rawAlloc = (void *) (mBuff->data.abpm.candidates.d_candidatesInfo + mBuff->data.abpm.maxCandidates);
   //Allocate space for the reorder buffer structures
-  mBuff->data.abpm.reorderBuffer.d_reorderBuffer = GPU_ALIGN_TO(rawAlloc,16);
-  rawAlloc = (void *) (mBuff->data.abpm.reorderBuffer.d_reorderBuffer + mBuff->data.abpm.maxReorderBuffer);
+  mBuff->data.abpm.reorderBuffer.threadMapScheduler.d_reorderBuffer = GPU_ALIGN_TO(rawAlloc,16);
+  rawAlloc = (void *) (mBuff->data.abpm.reorderBuffer.threadMapScheduler.d_reorderBuffer + mBuff->data.abpm.maxReorderBuffer);
   mBuff->data.abpm.reorderBuffer.d_initPosPerBucket = GPU_ALIGN_TO(rawAlloc,16);
   rawAlloc = (void *) (mBuff->data.abpm.reorderBuffer.d_initPosPerBucket + mBuff->data.abpm.maxBuckets);
   mBuff->data.abpm.reorderBuffer.d_initWarpPerBucket = GPU_ALIGN_TO(rawAlloc,16);
@@ -207,7 +207,6 @@ void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t tota
   gpu_buffer_t* const mBuff = (gpu_buffer_t *) bpmBuffer;
   const uint32_t averageQuerySize       = GPU_DIV_CEIL(totalQueryBases, totalQueries);
   const uint32_t candidatesPerQuery     = GPU_DIV_CEIL(totalCandidates, totalQueries);
-
   // Re-map the buffer layout with new information trying to fit better
   gpu_bpm_align_init_buffer_(bpmBuffer, averageQuerySize, candidatesPerQuery);
   // Checking if we need to reallocate a bigger buffer
@@ -219,6 +218,7 @@ void gpu_bpm_align_init_and_realloc_buffer_(void *bpmBuffer, const uint32_t tota
     const uint32_t  idSupDevice             = mBuff->idSupportedDevice;
     const float     resizeFactor            = 2.0;
     const size_t    bytesPerBPMBuffer       = totalCandidates * gpu_bpm_align_size_per_candidate(averageQuerySize, candidatesPerQuery);
+    //printf("RESIZE[BPM_ALIGN] %d %d \n",  mBuff->sizeBuffer, bytesPerBPMBuffer * resizeFactor);
     //Recalculate the minimum buffer size
     mBuff->sizeBuffer = bytesPerBPMBuffer * resizeFactor;
     //FREE HOST AND DEVICE BUFFER
@@ -257,14 +257,14 @@ gpu_error_t gpu_bpm_align_reorder_process(const gpu_bpm_align_queries_buffer_t* 
     numCandidatesPerBucket[idBucket]++;
   }
   // Number of warps per bucket
-  rebuff->elementsPerBuffer = 0;
+  rebuff->threadMapScheduler.elementsPerBuffer = 0;
   for(idBucket = 0; idBucket < rebuff->numBuckets - 1; idBucket++){
     numThreadsPerQuery = idBucket + 1;
     numQueriesPerWarp = GPU_WARP_SIZE / numThreadsPerQuery;
     numWarpsPerBucket[idBucket] = GPU_DIV_CEIL(numCandidatesPerBucket[idBucket], numQueriesPerWarp);
-    rebuff->h_initPosPerBucket[idBucket] = rebuff->elementsPerBuffer;
-    rebuff->h_endPosPerBucket[idBucket] = rebuff->elementsPerBuffer + numCandidatesPerBucket[idBucket];
-    rebuff->elementsPerBuffer += numWarpsPerBucket[idBucket] * numQueriesPerWarp;
+    rebuff->h_initPosPerBucket[idBucket] = rebuff->threadMapScheduler.elementsPerBuffer;
+    rebuff->h_endPosPerBucket[idBucket] = rebuff->threadMapScheduler.elementsPerBuffer + numCandidatesPerBucket[idBucket];
+    rebuff->threadMapScheduler.elementsPerBuffer += numWarpsPerBucket[idBucket] * numQueriesPerWarp;
   }
   // Fill the start position warps for each bucket
   for(idBucket = 1; idBucket < rebuff->numBuckets; idBucket++)
@@ -275,7 +275,7 @@ gpu_error_t gpu_bpm_align_reorder_process(const gpu_bpm_align_queries_buffer_t* 
   for(idCandidate = 0; idCandidate < cand->numCandidates; idCandidate++){
     idBucket = (qry->h_qinfo[cand->h_candidatesInfo[idCandidate].idQuery].size - 1) / GPU_BPM_ALIGN_PEQ_LENGTH_PER_CUDA_THREAD;
     if (idBucket < (rebuff->numBuckets - 1)){ // Sanity check (discards binning on outlayer buckets)
-      rebuff->h_reorderBuffer[tmpBuckets[idBucket]] = idCandidate;
+      rebuff->threadMapScheduler.h_reorderBuffer[tmpBuckets[idBucket]] = idCandidate;
       tmpBuckets[idBucket]++;
     }
   }
@@ -296,9 +296,9 @@ gpu_error_t gpu_bpm_align_reordering_buffer(gpu_buffer_t *mBuff)
   gpu_scheduler_buffer_t* const                  rebuff   = &mBuff->data.abpm.reorderBuffer;
   uint32_t                           			 idBucket;
   //Re-initialize the reorderBuffer (to reuse the buffer)
-  rebuff->numBuckets          = GPU_BPM_ALIGN_NUM_BUCKETS_FOR_BINNING;
-  rebuff->elementsPerBuffer   = 0;
-  rebuff->numWarps            = 0;
+  rebuff->numBuckets                             = GPU_BPM_ALIGN_NUM_BUCKETS_FOR_BINNING;
+  rebuff->threadMapScheduler.elementsPerBuffer   = 0;
+  rebuff->numWarps                               = 0;
   //Initialize buckets (32 buckets => max 4096 bases)
   for(idBucket = 0; idBucket < rebuff->numBuckets; idBucket++){
     rebuff->h_initPosPerBucket[idBucket]  = 0;
@@ -339,7 +339,7 @@ gpu_error_t gpu_bpm_align_transfer_CPU_to_GPU(gpu_buffer_t *mBuff)
   cpySize += qry->totalQueriesBases * sizeof(gpu_bpm_align_qry_entry_t);
   cpySize += qry->numQueries * sizeof(gpu_bpm_align_qry_info_t);
   cpySize += cand->numCandidates * sizeof(gpu_bpm_align_cand_info_t);
-  cpySize += rebuff->elementsPerBuffer * sizeof(uint32_t);
+  cpySize += rebuff->threadMapScheduler.elementsPerBuffer * sizeof(uint32_t);
   cpySize += rebuff->numBuckets * sizeof(uint32_t);
   cpySize += rebuff->numBuckets * sizeof(uint32_t);
   cpySize += rebuff->numBuckets * sizeof(uint32_t);
@@ -364,8 +364,8 @@ gpu_error_t gpu_bpm_align_transfer_CPU_to_GPU(gpu_buffer_t *mBuff)
     cpySize = cand->numCandidates * sizeof(gpu_bpm_align_cand_info_t);
     CUDA_ERROR(cudaMemcpyAsync(cand->d_candidatesInfo, cand->h_candidatesInfo, cpySize, cudaMemcpyHostToDevice, idStream));
     // Transfer reordered buffer to GPU
-    cpySize = rebuff->elementsPerBuffer * sizeof(uint32_t);
-    CUDA_ERROR(cudaMemcpyAsync(rebuff->d_reorderBuffer, rebuff->h_reorderBuffer, cpySize, cudaMemcpyHostToDevice, idStream));
+    cpySize = rebuff->threadMapScheduler.elementsPerBuffer * sizeof(uint32_t);
+    CUDA_ERROR(cudaMemcpyAsync(rebuff->threadMapScheduler.d_reorderBuffer, rebuff->threadMapScheduler.h_reorderBuffer, cpySize, cudaMemcpyHostToDevice, idStream));
     // Transfer bucket information to GPU
     cpySize = rebuff->numBuckets * sizeof(uint32_t);
     CUDA_ERROR(cudaMemcpyAsync(rebuff->d_initPosPerBucket, rebuff->h_initPosPerBucket, cpySize, cudaMemcpyHostToDevice, idStream));
@@ -407,22 +407,23 @@ void gpu_bpm_align_send_buffer_(void* const bpmBuffer, const uint32_t numPEQEntr
   mBuff->data.abpm.queries.numQueries            = numQueries;
   mBuff->data.abpm.candidates.numCandidates      = numCandidates;
   mBuff->data.abpm.cigars.numCigars              = numCandidates;
-  mBuff->data.abpm.reorderBuffer.elementsPerBuffer = numCandidates + bucketPaddingCandidates;
+  // Mapping the maximum number of task re-scheduled by the number of threads.
+  mBuff->data.abpm.reorderBuffer.threadMapScheduler.elementsPerBuffer = numCandidates + bucketPaddingCandidates;
   // Setting real output number of elements
   for(idCandidate = 0; idCandidate < numCandidates; idCandidate++){
 	const uint32_t idQuery = mBuff->data.abpm.candidates.h_candidatesInfo[idCandidate].idQuery;
-	  mBuff->data.abpm.cigars.h_cigarsInfo[idCandidate].offsetCigarStart = numCigarEntries;
+	mBuff->data.abpm.cigars.h_cigarsInfo[idCandidate].offsetCigarStart = numCigarEntries;
     numCigarEntries += mBuff->data.abpm.queries.h_qinfo[idQuery].size + 1;
   }
   mBuff->data.abpm.cigars.numCigarEntries = numCigarEntries;
-  //Select the device of the Multi-GPU platform
+  // Select the device of the Multi-GPU platform
   CUDA_ERROR(cudaSetDevice(mBuff->device[idSupDevice]->idDevice));
-  //CPU->GPU Transfers & Process Kernel in Asynchronous way
+  // CPU->GPU Transfers & Process Kernel in Asynchronous way
   GPU_ERROR(gpu_bpm_align_reordering_buffer(mBuff));
   GPU_ERROR(gpu_bpm_align_transfer_CPU_to_GPU(mBuff));
   /* INCLUDED SUPPORT for future GPUs with PTX ASM code (JIT compiling) */
   GPU_ERROR(gpu_bpm_align_process_buffer(mBuff));
-  //GPU->CPU Transfers
+  // GPU->CPU Transfers
   GPU_ERROR(gpu_bpm_align_transfer_GPU_to_CPU(mBuff));
 }
 
@@ -435,9 +436,9 @@ void gpu_bpm_align_receive_buffer_(void* const bpmBuffer)
   gpu_buffer_t* const mBuff       = (gpu_buffer_t *) bpmBuffer;
   const uint32_t      idSupDevice = mBuff->idSupportedDevice;
   const cudaStream_t  idStream    = mBuff->listStreams[mBuff->idStream];
-  //Select the device of the Multi-GPU platform
+  // Select the device of the Multi-GPU platform
   CUDA_ERROR(cudaSetDevice(mBuff->device[idSupDevice]->idDevice));
-  //Synchronize Stream (the thread wait for the commands done in the stream)
+  // Synchronize Stream (the thread wait for the commands done in the stream)
   CUDA_ERROR(cudaStreamSynchronize(idStream));
 }
 

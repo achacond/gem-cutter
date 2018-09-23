@@ -1,6 +1,6 @@
 /*
  *  GEM-Cutter "Highly optimized genomic resources for GPUs"
- *  Copyright (c) 2013-2016 by Alejandro Chacon    <alejandro.chacond@gmail.com>
+ *  Copyright (c) 2011-2018 by Alejandro Chacon    <alejandro.chacond@gmail.com>
  *
  *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See LICENSE, AUTHORS.
@@ -54,9 +54,8 @@ void __global__ gpu_fmi_ssearch_kernel(const gpu_fmi_device_entry_t* const fmi, 
       // Shared results
       const uint32_t lane = (localEntryThreadIdx == 0) ? localWarpThreadIdx + GPU_FMI_THREADS_PER_ENTRY : localEntryIdx * GPU_FMI_THREADS_PER_ENTRY;
       sharedInterval      = shfl_64(interval, lane);
-
       // Early exit condition
-      foundSeed           = (__ballot(interval == sharedInterval) >> (localIdSeed * GPU_FMI_SEED_THREADS_PER_ENTRY)) & GPU_UINT32_MASK_ONE_LOW;
+      foundSeed           = (ballot_32(interval == sharedInterval) >> (localIdSeed * GPU_FMI_SEED_THREADS_PER_ENTRY)) & GPU_UINT32_MASK_ONE_LOW;
 
       // Update interval for bitmap threads
       if (localEntryThreadIdx) interval = sharedInterval;
